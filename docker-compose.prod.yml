@@ -1,0 +1,14 @@
+services:
+  backend:
+    build:
+      target: production
+    volumes: !reset
+      - ./volumes/uploads:/app/uploads
+
+  frontend:
+    build:
+      target: production
+      args:
+        VITE_APP_NAME: ${APP_NAME}
+        VITE_API_BASE_URL: /api/v1
+    volumes: !reset []
