@@ -1,16 +1,25 @@
-from sqlalchemy import URL
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from collections.abc import AsyncIterator
+
+from fastapi import Request
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from app.core.config import Settings
 
 
 def create_database_engine(settings: Settings) -> AsyncEngine:
-    database_url = URL.create(
-        drivername="mysql+asyncmy",
-        username=settings.mariadb_user,
-        password=settings.mariadb_password.get_secret_value(),
-        host=settings.mariadb_host,
-        port=settings.mariadb_port,
-        database=settings.mariadb_database,
-    )
-    return create_async_engine(database_url, pool_pre_ping=True)
+    return create_async_engine(settings.database_url, pool_pre_ping=True, pool_recycle=3600)
+
+
+def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(engine, expire_on_commit=False)
+
+
+async def get_db_session(request: Request) -> AsyncIterator[AsyncSession]:
+    session_factory = request.app.state.session_factory
+    async with session_factory() as session:
+        yield session

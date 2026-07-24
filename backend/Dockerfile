@@ -16,8 +16,13 @@ FROM base AS development
 
 COPY pyproject.toml ./
 COPY app ./app
+COPY alembic.ini ./
+COPY alembic ./alembic
+COPY scripts ./scripts
 
-RUN pip install ".[dev]" && chown -R app:app /app
+RUN pip install ".[dev]" && \
+    chmod +x /app/scripts/start.sh && \
+    chown -R app:app /app
 
 COPY --chown=app:app tests ./tests
 
@@ -25,17 +30,20 @@ USER app
 
 EXPOSE 8000
 
-CMD ["python", "-m", "app"]
+CMD ["/app/scripts/start.sh"]
 
 FROM base AS production
 
 COPY pyproject.toml ./
 COPY app ./app
+COPY alembic.ini ./
+COPY alembic ./alembic
+COPY scripts ./scripts
 
-RUN pip install .
+RUN pip install . && chmod +x /app/scripts/start.sh
 
 USER app
 
 EXPOSE 8000
 
-CMD ["python", "-m", "app"]
+CMD ["/app/scripts/start.sh"]

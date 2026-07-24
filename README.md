@@ -6,7 +6,7 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 1 incluye:
+La Fase 2 incluye:
 
 - FastAPI con endpoints de vida y disponibilidad.
 - React, TypeScript y Vite con una interfaz inicial en español.
@@ -15,9 +15,12 @@ La Fase 1 incluye:
 - n8n preparado para automatizaciones futuras.
 - phpMyAdmin para administrar MariaDB en desarrollo.
 - Configuración centralizada mediante `.env` y health checks de los servicios.
+- Persistencia asíncrona con SQLAlchemy 2 y MariaDB.
+- Alembic con la migración inicial de usuarios, perfiles, identidades y tokens.
+- Roles `user` y `admin`, repositorio y capa de servicio de usuarios.
 
-Los modelos de datos, migraciones y usuarios pertenecen a la Fase 2 y no se han
-adelantado en esta fase.
+La autenticación HTTP, los formularios de registro e inicio de sesión y Google
+OAuth pertenecen a la Fase 3.
 
 ## Requisitos
 
@@ -87,8 +90,10 @@ Ejecutar las comprobaciones del backend:
 
 ```bash
 docker compose exec backend pytest
-docker compose exec backend ruff check app tests
+docker compose exec backend ruff check app tests alembic
 docker compose exec backend mypy app
+docker compose exec backend alembic current
+docker compose exec backend alembic check
 ```
 
 Comprobar y compilar el frontend:

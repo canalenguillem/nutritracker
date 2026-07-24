@@ -9,7 +9,7 @@ from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
-from app.db.session import create_database_engine
+from app.db.session import create_database_engine, create_session_factory
 from app.repositories.health import MariaDBHealthRepository, RedisHealthRepository
 from app.services.health import HealthService
 from app.services.redis import create_redis_client
@@ -20,6 +20,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     configure_logging(application_settings.log_level)
 
     database_engine = create_database_engine(application_settings)
+    session_factory = create_session_factory(database_engine)
     redis_client = create_redis_client(application_settings)
     health_service = HealthService(
         repositories=(
@@ -47,6 +48,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     application.state.health_service = health_service
+    application.state.session_factory = session_factory
 
     application.add_middleware(
         CORSMiddleware,

@@ -3,6 +3,7 @@ from typing import Literal
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy import URL
 
 
 class Settings(BaseSettings):
@@ -49,6 +50,17 @@ class Settings(BaseSettings):
         ]
         frontend_origin = self.frontend_url.rstrip("/")
         return list(dict.fromkeys([frontend_origin, *configured_origins]))
+
+    @property
+    def database_url(self) -> URL:
+        return URL.create(
+            drivername="mysql+asyncmy",
+            username=self.mariadb_user,
+            password=self.mariadb_password.get_secret_value(),
+            host=self.mariadb_host,
+            port=self.mariadb_port,
+            database=self.mariadb_database,
+        )
 
 
 @lru_cache
