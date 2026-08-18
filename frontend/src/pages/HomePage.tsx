@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { FeatureIcon } from "../components/FeatureIcon";
 import { HealthStatusCard } from "../components/HealthStatusCard";
 
@@ -41,15 +43,15 @@ export const HomePage = () => (
             útiles, revisa los detalles y decide siempre tú.
           </p>
           <div className="hero__actions">
-            <a className="button button--primary" href="#estado">
-              Comprobar disponibilidad
+            <Link className="button button--primary" to="/register">
+              Crear cuenta gratis
               <svg viewBox="0 0 20 20" aria-hidden="true">
                 <path d="m7 4 6 6-6 6" />
               </svg>
-            </a>
-            <a className="text-link" href="#como-funciona">
-              Descubrir cómo funciona
-            </a>
+            </Link>
+            <Link className="text-link" to="/login">
+              Ya tengo cuenta
+            </Link>
           </div>
           <p className="hero__trust">
             <svg viewBox="0 0 20 20" aria-hidden="true">

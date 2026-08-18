@@ -6,7 +6,18 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 2 incluye:
+La Fase 3 incluye, además de todo lo anterior:
+
+- Registro e inicio de sesión con correo electrónico y contraseña.
+- Contraseñas protegidas con Argon2 y tokens de acceso JWT de vida corta.
+- Tokens de refresco opacos guardados como hash, rotados en cada uso y con
+  detección de reutilización que revoca todas las sesiones del usuario.
+- Inicio de sesión con Google mediante OAuth 2.0 y estado de un solo uso en
+  Redis.
+- Formularios de registro e inicio de sesión validados con Zod, y un panel
+  privado accesible solo con sesión iniciada.
+
+La Fase 2 aportó la base sobre la que se apoya:
 
 - FastAPI con endpoints de vida y disponibilidad.
 - React, TypeScript y Vite con una interfaz inicial en español.
@@ -19,8 +30,13 @@ La Fase 2 incluye:
 - Alembic con la migración inicial de usuarios, perfiles, identidades y tokens.
 - Roles `user` y `admin`, repositorio y capa de servicio de usuarios.
 
-La autenticación HTTP, los formularios de registro e inicio de sesión y Google
-OAuth pertenecen a la Fase 3.
+El perfil de usuario, el registro de comidas y el análisis de fotografías
+pertenecen a fases posteriores.
+
+Para habilitar el acceso con Google se deben definir `GOOGLE_CLIENT_ID`,
+`GOOGLE_CLIENT_SECRET` y `GOOGLE_REDIRECT_URI` en `.env`. Sin esos valores el
+resto de la autenticación funciona con normalidad y el proveedor responde que
+no está disponible.
 
 ## Requisitos
 

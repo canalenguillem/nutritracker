@@ -1,10 +1,10 @@
 # Implementation status
 
 The project is implemented sequentially according to the phases requested by the
-product owner. Phase 2 is complete: the containerised foundation, persistence
-layer, Alembic migration, user domain models and role foundation have been
-compiled, started and health-checked successfully. Authentication and later
-product features remain intentionally deferred.
+product owner. Phase 3 is complete: email and password authentication, Google
+OAuth sign-in, rotating refresh tokens and the sign-up and sign-in screens have
+been compiled, started and verified against the running stack. The user profile,
+meal registration and photograph analysis remain intentionally deferred.
 
 Run the development application with:
 
