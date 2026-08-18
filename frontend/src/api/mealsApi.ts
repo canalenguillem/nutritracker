@@ -1,0 +1,104 @@
+import {
+  dailySummaryResponseSchema,
+  mealListResponseSchema,
+  mealResponseSchema,
+  parseAmount,
+} from "../schemas/mealSchema";
+import type {
+  DailySummary,
+  DailySummaryResponse,
+  Meal,
+  MealFormValues,
+  MealItem,
+  MealItemResponse,
+  MealResponse,
+} from "../types/meal";
+import { httpClient } from "./httpClient";
+
+const pad = (value: number): string => String(Math.floor(Math.abs(value))).padStart(2, "0");
+
+/**
+ * Combine the day and time fields into an instant the API can place on the
+ * timeline. Sending the browser offset keeps a 00:30 supper on the right day.
+ */
+export const toInstant = (day: string, time: string): string => {
+  const [year = 0, month = 1, date = 1] = day.split("-").map(Number);
+  const [hours = 0, minutes = 0] = time.split(":").map(Number);
+  const local = new Date(year, month - 1, date, hours, minutes, 0, 0);
+  const offsetMinutes = -local.getTimezoneOffset();
+  const sign = offsetMinutes < 0 ? "-" : "+";
+
+  return `${day}T${time}:00${sign}${pad(offsetMinutes / 60)}:${pad(offsetMinutes % 60)}`;
+};
+
+const toAmount = (value: string): string => parseAmount(value).toFixed(2);
+
+const toMealItem = (response: MealItemResponse): MealItem => ({
+  id: response.id,
+  name: response.name,
+  quantity: Number(response.quantity),
+  unit: response.unit,
+  kcal: Number(response.kcal),
+  proteinG: Number(response.protein_g),
+  fatG: Number(response.fat_g),
+  carbohydratesG: Number(response.carbohydrates_g),
+});
+
+const toMeal = (response: MealResponse): Meal => ({
+  id: response.id,
+  mealType: response.meal_type,
+  eatenAt: response.eaten_at,
+  source: response.source,
+  notes: response.notes,
+  kcal: Number(response.total_kcal),
+  proteinG: Number(response.protein_g),
+  fatG: Number(response.fat_g),
+  carbohydratesG: Number(response.carbohydrates_g),
+  items: response.items.map(toMealItem),
+});
+
+const toDailySummary = (response: DailySummaryResponse): DailySummary => ({
+  logDate: response.log_date,
+  mealCount: response.meal_count,
+  kcal: Number(response.total_kcal),
+  proteinG: Number(response.protein_g),
+  fatG: Number(response.fat_g),
+  carbohydratesG: Number(response.carbohydrates_g),
+});
+
+export const getDailySummary = async (day?: string): Promise<DailySummary> => {
+  const response = await httpClient.get<unknown>("/meals/summary", {
+    params: day ? { date: day } : undefined,
+  });
+
+  return toDailySummary(dailySummaryResponseSchema.parse(response.data));
+};
+
+export const getMeals = async (day: string): Promise<Meal[]> => {
+  const response = await httpClient.get<unknown>("/meals", { params: { date: day } });
+
+  return mealListResponseSchema.parse(response.data).map(toMeal);
+};
+
+export const createMeal = async (values: MealFormValues): Promise<Meal> => {
+  const response = await httpClient.post<unknown>("/meals", {
+    meal_type: values.mealType,
+    eaten_at: toInstant(values.day, values.time),
+    notes: values.notes.trim() || null,
+    items: values.items.map((item) => ({
+      name: item.name.trim(),
+      quantity: toAmount(item.quantity),
+      unit: item.unit.trim(),
+      kcal: toAmount(item.kcal),
+      protein_g: toAmount(item.protein_g),
+      fat_g: toAmount(item.fat_g),
+      carbohydrates_g: toAmount(item.carbohydrates_g),
+    })),
+  });
+
+  return toMeal(mealResponseSchema.parse(response.data));
+};
+
+export const deleteMeal = async (mealId: string): Promise<void> => {
+  await httpClient.delete(`/meals/${mealId}`);
+};

@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { PrivateLayout } from "../layouts/PrivateLayout";
 import { PublicLayout } from "../layouts/PublicLayout";
+import { AddMealPage } from "../pages/AddMealPage";
 import { AuthCallbackPage } from "../pages/AuthCallbackPage";
 import { DashboardPage } from "../pages/DashboardPage";
 import { HomePage } from "../pages/HomePage";
@@ -29,6 +30,7 @@ export const AppRouter = () => (
     <Route element={<ProtectedRoute />}>
       <Route element={<PrivateLayout />}>
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="meals/new" element={<AddMealPage />} />
       </Route>
     </Route>
 

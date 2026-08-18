@@ -1345,3 +1345,350 @@ svg {
     display: inline;
   }
 }
+
+.dashboard__card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.dashboard__card-head h2 {
+  margin: 0;
+}
+
+.dashboard__disclaimer {
+  margin: 1.1rem 0 0;
+  color: var(--color-ink-soft);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.dashboard__meals {
+  display: grid;
+  gap: 1rem;
+}
+
+.dashboard__meals h2 {
+  margin: 0;
+  color: var(--color-green-dark);
+  font-size: 1.05rem;
+}
+
+.macros {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
+
+.macros > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.macros dt {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-ink-soft);
+  font-size: 0.78rem;
+}
+
+.macros dd {
+  margin: 0;
+  color: var(--color-green-dark);
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.macros__energy dd {
+  font-size: 1.9rem;
+  line-height: 1.1;
+}
+
+.macros__energy dd span {
+  color: var(--color-ink-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.macros--compact dd {
+  font-size: 0.95rem;
+}
+
+.meal-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1.1rem;
+  background: var(--color-paper);
+  box-shadow: var(--shadow-small);
+}
+
+.meal-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.meal-card__type {
+  margin: 0;
+  color: var(--color-green-dark);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.meal-card__time {
+  margin: 0.15rem 0 0;
+  color: var(--color-ink-soft);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.meal-card__energy {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  color: var(--color-green-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.meal-card__energy strong {
+  font-size: 1.35rem;
+}
+
+.meal-card__energy span {
+  color: var(--color-ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.meal-card__items {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.meal-card__items li {
+  display: grid;
+  align-items: baseline;
+  gap: 0.2rem 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgb(220 227 221 / 60%);
+  grid-template-columns: 1fr auto;
+  font-size: 0.88rem;
+}
+
+.meal-card__items li:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.meal-card__item-name {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.meal-card__item-quantity {
+  color: var(--color-ink-soft);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  grid-column: 1;
+}
+
+.meal-card__item-energy {
+  color: var(--color-ink-soft);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.meal-card__notes {
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.meal-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.meal-card__macros {
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.meal-card__delete {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  background: none;
+  color: var(--color-error);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.meal-card__delete:hover:not(:disabled) {
+  border-color: rgb(169 71 58 / 30%);
+  background: rgb(169 71 58 / 6%);
+}
+
+.meal-card__delete:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.add-meal {
+  padding: 3rem 0 5rem;
+}
+
+.add-meal__content {
+  display: grid;
+  gap: 2rem;
+  max-width: 52rem;
+}
+
+.add-meal__heading {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.add-meal__heading h1 {
+  margin: 0;
+  color: var(--color-green-dark);
+  font-size: 2rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.add-meal__heading > p:last-child {
+  margin: 0;
+  max-width: 46rem;
+  color: var(--color-ink-soft);
+  line-height: 1.6;
+}
+
+.add-meal__form {
+  display: grid;
+  gap: 1.75rem;
+}
+
+.add-meal__when {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.add-meal__items {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.add-meal__items-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.add-meal__items-head h2 {
+  margin: 0;
+  color: var(--color-green-dark);
+  font-size: 1.05rem;
+}
+
+.meal-item-fields {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1.1rem;
+  background: var(--color-paper);
+}
+
+.meal-item-fields legend {
+  padding: 0 0.5rem;
+  color: var(--color-ink-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.meal-item-fields__identity {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.meal-item-fields__macros {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.meal-item-fields__remove {
+  justify-self: start;
+  padding: 0.35rem 0;
+  border: none;
+  background: none;
+  color: var(--color-error);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}
+
+.form-field__input--area {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+select.form-field__input {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-green) 50%),
+    linear-gradient(135deg, var(--color-green) 50%, transparent 50%);
+  background-position: right 1.1rem center, right 0.85rem center;
+  background-size: 0.35rem 0.35rem, 0.35rem 0.35rem;
+  background-repeat: no-repeat;
+  padding-right: 2.2rem;
+}
+
+.add-meal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+@media (min-width: 45rem) {
+  .meal-item-fields__identity {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .meal-item-fields__macros {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

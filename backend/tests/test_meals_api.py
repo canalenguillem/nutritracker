@@ -93,6 +93,14 @@ async def test_creating_a_meal_returns_the_computed_totals(client: AsyncClient) 
     assert len(body["items"]) == 2
 
 
+async def test_the_eaten_time_is_returned_as_utc(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+
+    body = await create_meal(client, headers, eaten_at="2026-08-18T22:30:00+02:00")
+
+    assert body["eaten_at"] == "2026-08-18T20:30:00Z"
+
+
 async def test_a_meal_needs_at_least_one_item(client: AsyncClient) -> None:
     headers = await sign_up(client)
 

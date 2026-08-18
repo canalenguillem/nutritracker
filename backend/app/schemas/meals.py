@@ -1,8 +1,8 @@
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 from app.models.enums import MealSource, MealStatus, MealType
 
@@ -63,6 +63,11 @@ class MealResponse(BaseModel):
     fat_g: Decimal
     carbohydrates_g: Decimal
     items: list[MealItemResponse]
+
+    @field_serializer("eaten_at")
+    def serialize_eaten_at(self, eaten_at: datetime) -> datetime:
+        # Stored naive in UTC; say so, or the browser reads it as local time.
+        return eaten_at.replace(tzinfo=UTC)
 
 
 class DailySummaryResponse(BaseModel):
