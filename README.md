@@ -6,7 +6,16 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 6 incluye, además de todo lo anterior:
+La Fase 7 incluye, además de todo lo anterior:
+
+- Las estimaciones se acumulan: se describe un alimento tras otro y todos se
+  suman al mismo plato, en vez de sustituirse.
+- Buscador de comidas anteriores en la pantalla de alta, para repetir un plato
+  habitual sin volver a describirlo ni pagar otra estimación.
+- La búsqueda ofrece cada combinación de alimentos una sola vez, aunque se haya
+  comido muchas veces.
+
+La Fase 6 aportó la lectura de etiquetas:
 
 - Junto a la descripción se puede adjuntar una foto de la tabla nutricional,
   que el modelo lee para afinar la estimación.

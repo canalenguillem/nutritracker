@@ -1,11 +1,11 @@
 # Implementation status
 
 The project is implemented sequentially according to the phases requested by the
-product owner. Phase 6 is complete: a meal can be described in words and backed
-by a photograph of its nutrition label, which the estimator reads and then drops
-without storing it. Running the estimator against OpenAI requires a key in
-`.env`. The user profile and keeping photographs alongside a meal remain
-intentionally deferred.
+product owner. Phase 7 is complete: several estimates can be gathered into one
+dish, and a dish already eaten can be found and repeated without asking the
+estimator again. Running the estimator against OpenAI requires a key in `.env`.
+The user profile and keeping photographs alongside a meal remain intentionally
+deferred.
 
 Run the development application with:
 
