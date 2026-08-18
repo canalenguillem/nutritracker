@@ -55,6 +55,9 @@ export const dailySummaryResponseSchema = z
     protein_g: z.string(),
     fat_g: z.string(),
     carbohydrates_g: z.string(),
+    exercise_kcal: z.string(),
+    exercise_count: z.number().int(),
+    net_kcal: z.string(),
   })
   .passthrough();
 

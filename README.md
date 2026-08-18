@@ -6,7 +6,18 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 7 incluye, además de todo lo anterior:
+La Fase 8 incluye, además de todo lo anterior:
+
+- Registro de ejercicio con actividad, duración, intensidad, notas y hora.
+- El gasto se estima a partir de la actividad, la intensidad, el tiempo y el
+  peso corporal, y se guarda también la cifra que aporte la persona, que es la
+  que cuenta para el día.
+- Sin peso no se estima nada: el gasto depende del cuerpo que se mueve. El peso
+  que se indique en una sesión se recuerda para las siguientes.
+- El resumen del día muestra el ejercicio y la comida menos el ejercicio. No es
+  un déficit: falta conocer el gasto en reposo, que llegará con el perfil.
+
+La Fase 7 aportó los platos compuestos:
 
 - Las estimaciones se acumulan: se describe un alimento tras otro y todos se
   suman al mismo plato, en vez de sustituirse.

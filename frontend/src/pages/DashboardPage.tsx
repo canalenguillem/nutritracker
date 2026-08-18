@@ -1,10 +1,16 @@
 import { Link } from "react-router-dom";
 
+import { ExerciseCard } from "../components/ExerciseCard";
 import { MacroTotals } from "../components/MacroTotals";
 import { MealCard } from "../components/MealCard";
 import { PageLoader } from "../components/PageLoader";
 import { useAuth } from "../features/auth/useAuth";
 import { formatDay } from "../features/meals/mealLabels";
+import {
+  useDayExercises,
+  useDeleteExercise,
+} from "../features/exercises/useExercises";
+import { formatEnergy } from "../features/meals/mealLabels";
 import { getMealErrorMessage } from "../features/meals/mealErrors";
 import { useDailySummary, useDayMeals, useDeleteMeal } from "../features/meals/useMeals";
 
@@ -12,7 +18,9 @@ export const DashboardPage = () => {
   const { user } = useAuth();
   const summaryQuery = useDailySummary();
   const mealsQuery = useDayMeals(summaryQuery.data?.logDate);
+  const exercisesQuery = useDayExercises(summaryQuery.data?.logDate);
   const deleteMeal = useDeleteMeal();
+  const deleteExercise = useDeleteExercise();
 
   if (summaryQuery.isPending) {
     return <PageLoader message="Cargando tu día…" />;
@@ -32,6 +40,7 @@ export const DashboardPage = () => {
 
   const summary = summaryQuery.data;
   const meals = mealsQuery.data ?? [];
+  const exercises = exercisesQuery.data ?? [];
 
   return (
     <section className="dashboard">
@@ -54,13 +63,33 @@ export const DashboardPage = () => {
         <article className="dashboard__card">
           <div className="dashboard__card-head">
             <h2>Resumen de hoy</h2>
-            <Link className="button button--primary button--small" to="/meals/new">
-              Añadir comida
-            </Link>
+            <div className="dashboard__actions">
+              <Link className="button button--primary button--small" to="/meals/new">
+                Añadir comida
+              </Link>
+              <Link className="button button--secondary button--small" to="/exercises/new">
+                Añadir ejercicio
+              </Link>
+            </div>
           </div>
           <MacroTotals macros={summary} />
+          {summary.exerciseCount > 0 ? (
+            <div className="dashboard__balance">
+              <p>
+                <span>Ejercicio</span>
+                <strong>−{formatEnergy(summary.exerciseKcal)} kcal</strong>
+              </p>
+              <p>
+                <span>Comida menos ejercicio</span>
+                <strong>{formatEnergy(summary.netKcal)} kcal</strong>
+              </p>
+            </div>
+          ) : null}
           <p className="dashboard__disclaimer">
             Los valores son estimaciones a partir de lo que has introducido.
+            {summary.exerciseCount > 0
+              ? " «Comida menos ejercicio» no es tu déficit: todavía no sabemos lo que gastas en reposo."
+              : ""}
           </p>
         </article>
 
@@ -85,6 +114,23 @@ export const DashboardPage = () => {
               meal={meal}
               onDelete={(mealId) => deleteMeal.mutate(mealId)}
               isDeleting={deleteMeal.isPending && deleteMeal.variables === meal.id}
+            />
+          ))}
+        </div>
+
+        <div className="dashboard__meals">
+          <h2>Lo que has movido</h2>
+          {exercises.length === 0 ? (
+            <p className="dashboard__placeholder">
+              Cuando añadas una sesión aparecerá aquí, con su gasto estimado.
+            </p>
+          ) : null}
+          {exercises.map((exercise) => (
+            <ExerciseCard
+              key={exercise.id}
+              exercise={exercise}
+              onDelete={(exerciseId) => deleteExercise.mutate(exerciseId)}
+              isDeleting={deleteExercise.isPending && deleteExercise.variables === exercise.id}
             />
           ))}
         </div>

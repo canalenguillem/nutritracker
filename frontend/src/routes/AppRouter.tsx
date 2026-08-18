@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { PrivateLayout } from "../layouts/PrivateLayout";
 import { PublicLayout } from "../layouts/PublicLayout";
+import { AddExercisePage } from "../pages/AddExercisePage";
 import { AddMealPage } from "../pages/AddMealPage";
 import { AuthCallbackPage } from "../pages/AuthCallbackPage";
 import { DashboardPage } from "../pages/DashboardPage";
@@ -30,6 +31,7 @@ export const AppRouter = () => (
       <Route element={<PrivateLayout />}>
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="meals/new" element={<AddMealPage />} />
+        <Route path="exercises/new" element={<AddExercisePage />} />
       </Route>
     </Route>
 

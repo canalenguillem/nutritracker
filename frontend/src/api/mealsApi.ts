@@ -62,6 +62,9 @@ const toMeal = (response: MealResponse): Meal => ({
 const toDailySummary = (response: DailySummaryResponse): DailySummary => ({
   logDate: response.log_date,
   mealCount: response.meal_count,
+  exerciseKcal: Number(response.exercise_kcal),
+  exerciseCount: response.exercise_count,
+  netKcal: Number(response.net_kcal),
   kcal: Number(response.total_kcal),
   proteinG: Number(response.protein_g),
   fatG: Number(response.fat_g),

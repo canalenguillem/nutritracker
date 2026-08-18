@@ -48,6 +48,10 @@ export interface Meal extends Macros {
 export interface DailySummary extends Macros {
   readonly logDate: string;
   readonly mealCount: number;
+  readonly exerciseKcal: number;
+  readonly exerciseCount: number;
+  /** Food minus exercise. Not a deficit: the baseline expenditure is unknown. */
+  readonly netKcal: number;
 }
 
 export interface EstimatedItem extends Macros {
