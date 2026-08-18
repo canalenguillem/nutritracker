@@ -48,12 +48,12 @@ def test_the_balance_counts_resting_living_and_training() -> None:
 
     assert balance.status == "estimated"
     assert balance.resting_kcal == Decimal("1892")
-    # 1892 * 1.35 for daily living.
-    assert balance.living_kcal == Decimal("2554")
+    # 1892 * 1.40 for a day spent in movement.
+    assert balance.living_kcal == Decimal("2649")
     # The session cost 806, of which 62 was resting that living already counts.
     assert balance.exercise_above_resting_kcal == Decimal("744")
-    assert balance.total_expenditure_kcal == Decimal("3298")
-    assert balance.balance_kcal == Decimal("-1863")
+    assert balance.total_expenditure_kcal == Decimal("3393")
+    assert balance.balance_kcal == Decimal("-1958")
 
 
 def test_resting_is_not_counted_twice_during_training() -> None:
@@ -107,9 +107,9 @@ def test_training_is_not_counted_twice() -> None:
 
     assert without_training.living_kcal is not None
     assert without_training.resting_kcal is not None
-    # Even at the top setting, living stays well under the textbook 1.9 factor
-    # that would already include training.
-    assert without_training.living_kcal < without_training.resting_kcal * Decimal("1.6")
+    # Even at the top setting, living stays under the textbook multipliers for a
+    # training week (1.725 and 1.9), which would already contain the sessions.
+    assert without_training.living_kcal < without_training.resting_kcal * Decimal("1.7")
 
 
 def test_eating_more_than_spent_is_a_surplus() -> None:
@@ -180,3 +180,43 @@ def test_an_unknown_activity_level_falls_back() -> None:
 
     assert balance.status == "estimated"
     assert balance.living_kcal is not None
+
+
+def test_a_sedentary_day_matches_the_textbook_no_exercise_factor() -> None:
+    """1.2 is what the textbooks apply to someone who does not train."""
+    balance = energy_balance(
+        consumed_kcal=Decimal("1435.00"),
+        exercise_kcal=Decimal("739.77"),
+        exercise_minutes=47,
+        weight_kg=Decimal("105.40"),
+        height_cm=Decimal("174.00"),
+        birth_date=date(1974, 9, 11),
+        biological_sex="male",
+        activity_level="sedentary",
+        today=TODAY,
+    )
+
+    assert balance.resting_kcal == Decimal("1892")
+    assert balance.living_kcal == Decimal("2270")
+    assert balance.exercise_above_resting_kcal == Decimal("678")
+    assert balance.total_expenditure_kcal == Decimal("2948")
+    assert balance.balance_kcal == Decimal("-1513")
+
+
+def test_sitting_all_day_spends_less_than_moving_all_day() -> None:
+    def spend(activity_level: str) -> Decimal:
+        balance = energy_balance(
+            consumed_kcal=Decimal("2000"),
+            exercise_kcal=Decimal("0"),
+            exercise_minutes=0,
+            weight_kg=Decimal("105.40"),
+            height_cm=Decimal("174.00"),
+            birth_date=date(1974, 9, 11),
+            biological_sex="male",
+            activity_level=activity_level,
+            today=TODAY,
+        )
+        assert balance.living_kcal is not None
+        return balance.living_kcal
+
+    assert spend("sedentary") < spend("light") < spend("moderate") < spend("active")

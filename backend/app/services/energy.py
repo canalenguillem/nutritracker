@@ -18,12 +18,15 @@ UNSPECIFIED_OFFSET = (MALE_OFFSET + FEMALE_OFFSET) / Decimal("2")
 # What daily living costs on top of resting, NOT counting workouts: those are
 # recorded one by one and added separately. Using a textbook activity factor
 # here would count the same training session twice.
+# Sedentary is the 1.2 the textbooks use for someone who does not train, which
+# is exactly what this factor should describe. The tiers above it are physically
+# demanding days, not training weeks: training is added on top.
 LIVING_FACTORS: dict[str, Decimal] = {
-    "sedentary": Decimal("1.15"),
-    "light": Decimal("1.25"),
-    "moderate": Decimal("1.35"),
-    "active": Decimal("1.45"),
-    "very_active": Decimal("1.55"),
+    "sedentary": Decimal("1.20"),
+    "light": Decimal("1.30"),
+    "moderate": Decimal("1.40"),
+    "active": Decimal("1.50"),
+    "very_active": Decimal("1.60"),
 }
 DEFAULT_LIVING_FACTOR = LIVING_FACTORS["moderate"]
 

@@ -239,11 +239,11 @@ async def test_the_summary_reports_a_deficit_once_the_profile_is_complete(
     body = response.json()
     assert body["balance_status"] == "estimated"
     assert body["resting_kcal"] == "1892"
-    assert body["living_kcal"] == "2554"
+    assert body["living_kcal"] == "2649"
     # Of the 1059 confirmed, 62 was the resting that daily living already counts.
     assert body["exercise_above_resting_kcal"] == "997"
-    assert body["total_expenditure_kcal"] == "3551"
-    assert body["balance_kcal"] == "-2116"
+    assert body["total_expenditure_kcal"] == "3646"
+    assert body["balance_kcal"] == "-2211"
 
 
 async def test_the_summary_withholds_a_balance_without_a_profile(client: AsyncClient) -> None:

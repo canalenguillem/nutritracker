@@ -156,7 +156,7 @@ export const ProfilePage = () => {
 
             <div className="form-field">
               <label className="form-field__label" htmlFor="profile-activity">
-                Actividad diaria, sin contar entrenamientos
+                Cómo es tu día, sin contar entrenamientos
               </label>
               <select
                 className="form-field__input"

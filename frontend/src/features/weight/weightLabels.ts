@@ -24,12 +24,19 @@ export const formatMeasuredOn = (isoDay: string): string => {
   );
 };
 
+/**
+ * Described by what a day looks like, not by how often someone trains.
+ *
+ * The usual wording ("moderate" for three to five sessions a week) counts
+ * training, which is recorded separately here, so borrowing it made people pick
+ * a level one or two steps too high.
+ */
 export const activityOptions = [
-  { value: "sedentary", label: "Sedentario" },
-  { value: "light", label: "Poco activo" },
-  { value: "moderate", label: "Moderado" },
-  { value: "active", label: "Activo" },
-  { value: "very_active", label: "Muy activo" },
+  { value: "sedentary", label: "Sentado casi todo el día" },
+  { value: "light", label: "De pie o andando un rato al día" },
+  { value: "moderate", label: "En movimiento buena parte del día" },
+  { value: "active", label: "Trabajo físico la mayor parte del día" },
+  { value: "very_active", label: "Trabajo físico duro todo el día" },
 ] as const;
 
 export const goalOptions = [

@@ -12,7 +12,8 @@ La Fase 10 incluye, además de todo lo anterior:
   estimado por Mifflin-St Jeor a partir de estatura, peso, edad y sexo.
 - El factor de actividad diaria excluye los entrenamientos a propósito, porque
   esos se registran uno a uno y se suman aparte. Un factor de manual los
-  contaría dos veces.
+  contaría dos veces, y por eso las opciones describen cómo es el día de la
+  persona y no cuántas veces entrena a la semana.
 - Del entrenamiento solo se suma lo que gasta por encima del reposo: un MET de 1
   es estar en reposo, así que la cifra de una sesión ya lleva dentro el reposo de
   esos minutos, y la vida diaria cubre las 24 horas.
