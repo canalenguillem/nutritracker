@@ -10,6 +10,10 @@ La Fase 6 incluye, además de todo lo anterior:
 
 - Junto a la descripción se puede adjuntar una foto de la tabla nutricional,
   que el modelo lee para afinar la estimación.
+- Desde el móvil se puede hacer la foto en el momento o elegir una imagen ya
+  guardada, con vista previa antes de enviarla.
+- La foto se reduce en el navegador antes de subirla, de modo que una
+  fotografía de móvil no choque con el límite de subida.
 - La foto no se guarda: se envía al proveedor para leerla y se descarta.
 - Se aceptan JPEG, PNG y WebP hasta `MAX_UPLOAD_MB`, comprobando el contenido
   del archivo y no su nombre ni el tipo declarado.
