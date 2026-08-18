@@ -6,7 +6,21 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 4 incluye, además de todo lo anterior:
+La Fase 5 incluye, además de todo lo anterior:
+
+- Estimación de una comida a partir de una descripción escrita: «un café con
+  nata» devuelve alimentos, cantidades y macronutrientes.
+- Cada alimento llega con su nivel de confianza y con los supuestos que se han
+  hecho, además de preguntas para afinar la estimación.
+- Nada se guarda hasta que la persona revisa y confirma los valores.
+- Los totales se suman en el servidor a partir de los alimentos, nunca se toman
+  del modelo.
+
+Para usar la estimación hay que definir `OPENAI_API_KEY` y `OPENAI_MODEL` en
+`.env`. Sin esos valores el resto de la aplicación funciona con normalidad y el
+formulario indica que el estimador no está disponible.
+
+La Fase 4 aportó el registro de comidas:
 
 - Registro manual de comidas con tantos alimentos como haga falta.
 - Diario diario con el desglose de cada comida y los totales del día.
@@ -41,8 +55,8 @@ La Fase 2 aportó la base sobre la que se apoya:
 - Alembic con la migración inicial de usuarios, perfiles, identidades y tokens.
 - Roles `user` y `admin`, repositorio y capa de servicio de usuarios.
 
-El perfil de usuario, la subida de fotografías y el análisis con IA
-pertenecen a fases posteriores.
+El perfil de usuario y la subida de fotografías pertenecen a fases
+posteriores.
 
 Para habilitar el acceso con Google se deben definir `GOOGLE_CLIENT_ID`,
 `GOOGLE_CLIENT_SECRET` y `GOOGLE_REDIRECT_URI` en `.env`. Sin esos valores el
