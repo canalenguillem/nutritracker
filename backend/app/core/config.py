@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     backend_port: int = Field(default=8000, ge=1, le=65535)
     frontend_url: str = "http://localhost:3000"
     cors_origins: str = ""
+    registration_open: bool = True
     jwt_secret_key: SecretStr = SecretStr("")
     jwt_access_token_minutes: int = Field(default=15, ge=1, le=60)
     jwt_refresh_token_days: int = Field(default=30, ge=1, le=90)

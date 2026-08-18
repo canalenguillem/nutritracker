@@ -5,9 +5,9 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
+from support import build_settings
 
 from app.api.v1.auth import REFRESH_COOKIE_NAME
-from app.core.config import Settings
 from app.main import create_app
 from app.models.base import Base
 
@@ -20,7 +20,7 @@ REGISTRATION = {
 
 @pytest.fixture
 async def application() -> AsyncIterator[FastAPI]:
-    settings = Settings(app_env="test", jwt_secret_key="api-test-secret-key-value-32-chars")
+    settings = build_settings()
     application = create_app(settings)
     engine = create_async_engine(
         "sqlite+aiosqlite://",
@@ -46,6 +46,28 @@ async def register(client: AsyncClient) -> dict[str, object]:
     response = await client.post("/api/v1/auth/register", json=REGISTRATION)
     assert response.status_code == 201, response.text
     return response.json()
+
+
+async def test_register_is_refused_while_new_accounts_are_closed() -> None:
+    settings = build_settings(registration_open=False)
+    application = create_app(settings)
+    engine = create_async_engine(
+        "sqlite+aiosqlite://",
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
+    )
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+    application.state.session_factory = async_sessionmaker(engine, expire_on_commit=False)
+
+    transport = ASGITransport(app=application)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        response = await client.post("/api/v1/auth/register", json=REGISTRATION)
+
+    await engine.dispose()
+
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "FORBIDDEN"
 
 
 async def test_register_returns_a_session_and_sets_the_refresh_cookie(

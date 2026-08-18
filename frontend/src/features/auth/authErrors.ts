@@ -20,6 +20,7 @@ const messagesByCallbackError: Readonly<Record<string, string>> = {
     "Ya existe una cuenta con este correo electrónico. Inicia sesión con tu contraseña.",
   google_exchange_failed: "No se pudo completar el acceso con Google. Inténtalo de nuevo.",
   invalid_state: "La sesión de acceso con Google ha caducado. Vuelve a intentarlo.",
+  registration_closed: "Las cuentas nuevas están cerradas por ahora.",
   missing_authorization_code: "Google no devolvió la información necesaria para continuar.",
 };
 

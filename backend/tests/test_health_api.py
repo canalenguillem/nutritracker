@@ -3,14 +3,14 @@ from collections.abc import AsyncIterator
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from support import build_settings
 
-from app.core.config import Settings
 from app.main import create_app
 
 
 @pytest.fixture
 def application() -> FastAPI:
-    return create_app(Settings(app_env="test"))
+    return create_app(build_settings())
 
 
 @pytest.fixture

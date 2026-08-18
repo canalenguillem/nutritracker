@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from support import build_settings
 
 from app.core.config import Settings
 from app.models.base import utc_now
@@ -12,6 +13,7 @@ from app.services.auth import (
     InactiveUserError,
     InvalidCredentialsError,
     InvalidRefreshTokenError,
+    RegistrationClosedError,
     RequestContext,
 )
 from app.services.users import UserService
@@ -22,7 +24,7 @@ CONTEXT = RequestContext(user_agent="pytest", ip_address="10.0.0.1")
 
 @pytest.fixture
 def settings() -> Settings:
-    return Settings(app_env="test", jwt_secret_key="unit-test-secret-key-value-32-chars")
+    return build_settings()
 
 
 @pytest.fixture
@@ -296,3 +298,27 @@ async def test_google_login_refuses_to_link_an_unverified_address(service: AuthS
 
     with pytest.raises(InvalidCredentialsError):
         await service.login_with_google(account, CONTEXT)
+
+
+async def test_google_cannot_create_an_account_while_registration_is_closed() -> None:
+    users = FakeUserRepository()
+    settings = build_settings(registration_open=False)
+    service = AuthService(
+        users=UserService(users),
+        refresh_tokens=FakeRefreshTokenRepository(),
+        identities=FakeAuthIdentityRepository(),
+        settings=settings,
+    )
+
+    with pytest.raises(RegistrationClosedError):
+        await service.login_with_google(
+            GoogleAccount(
+                provider_user_id="google-123",
+                email="stranger@example.com",
+                display_name="Stranger",
+                email_verified=True,
+            ),
+            RequestContext(),
+        )
+
+    assert users.users == []

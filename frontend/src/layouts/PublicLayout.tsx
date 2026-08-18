@@ -23,14 +23,9 @@ export const PublicLayout = () => {
                 Ir al panel
               </Link>
             ) : (
-              <>
-                <Link className="text-link" to="/login">
-                  Iniciar sesión
-                </Link>
-                <Link className="button button--primary button--small" to="/register">
-                  Crear cuenta
-                </Link>
-              </>
+              <Link className="button button--primary button--small" to="/login">
+                Iniciar sesión
+              </Link>
             )}
           </nav>
         </div>

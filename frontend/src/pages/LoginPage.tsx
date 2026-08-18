@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
@@ -87,9 +87,6 @@ export const LoginPage = () => {
 
       <GoogleSignInButton label="Continuar con Google" />
 
-      <p className="auth-card__switch">
-        ¿Todavía no tienes cuenta? <Link to="/register">Crear una cuenta</Link>
-      </p>
     </section>
   );
 };

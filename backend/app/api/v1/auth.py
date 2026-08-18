@@ -17,6 +17,7 @@ from app.services.auth import (
     InvalidCredentialsError,
     InvalidRefreshTokenError,
     IssuedSession,
+    RegistrationClosedError,
 )
 from app.services.google_oauth import (
     GoogleOAuthDisabledError,
@@ -74,6 +75,9 @@ async def register(
     context: RequestContextDependency,
     settings: SettingsDependency,
 ) -> SessionResponse:
+    if not settings.registration_open:
+        raise _registration_closed()
+
     try:
         session = await service.register(
             email=payload.email,
@@ -193,12 +197,21 @@ async def google_callback(
         return _frontend_redirect(settings, "google_exchange_failed")
     except InvalidCredentialsError:
         return _frontend_redirect(settings, "email_already_registered")
+    except RegistrationClosedError:
+        return _frontend_redirect(settings, "registration_closed")
     except InactiveUserError:
         return _frontend_redirect(settings, "account_inactive")
 
     response = _frontend_redirect(settings)
     _set_refresh_cookie(response, session, settings)
     return response
+
+
+def _registration_closed() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="New accounts are closed for now.",
+    )
 
 
 def _frontend_redirect(settings: Settings, error: str | None = None) -> RedirectResponse:

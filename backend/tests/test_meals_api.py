@@ -7,9 +7,9 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
+from support import build_settings
 
 from app.api.deps import get_food_analysis_service
-from app.core.config import Settings
 from app.main import create_app
 from app.models.base import Base
 from app.services.food_analysis import (
@@ -49,7 +49,7 @@ MEAL = {
 
 @pytest.fixture
 async def application() -> AsyncIterator[FastAPI]:
-    settings = Settings(app_env="test", jwt_secret_key="api-test-secret-key-value-32-chars")
+    settings = build_settings()
     application = create_app(settings)
     engine = create_async_engine(
         "sqlite+aiosqlite://",

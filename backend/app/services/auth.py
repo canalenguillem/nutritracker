@@ -32,6 +32,10 @@ class InactiveUserError(Exception):
     pass
 
 
+class RegistrationClosedError(Exception):
+    pass
+
+
 @dataclass(frozen=True)
 class RequestContext:
     user_agent: str | None = None
@@ -152,6 +156,9 @@ class AuthService:
             raise InvalidCredentialsError(account.email)
 
         if user is None:
+            # Signing in with Google creates an account, so it obeys the same gate.
+            if not self._settings.registration_open:
+                raise RegistrationClosedError(account.email)
             user = await self._users.create_user(
                 NewUser(
                     email=account.email,

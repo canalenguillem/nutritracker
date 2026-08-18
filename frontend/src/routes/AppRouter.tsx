@@ -8,7 +8,6 @@ import { AuthCallbackPage } from "../pages/AuthCallbackPage";
 import { DashboardPage } from "../pages/DashboardPage";
 import { HomePage } from "../pages/HomePage";
 import { LoginPage } from "../pages/LoginPage";
-import { RegisterPage } from "../pages/RegisterPage";
 import { GuestRoute } from "./GuestRoute";
 import { ProtectedRoute } from "./ProtectedRoute";
 
@@ -21,7 +20,7 @@ export const AppRouter = () => (
     <Route element={<GuestRoute />}>
       <Route element={<AuthLayout />}>
         <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
+        {/* Sign-up is closed for now; RegisterPage stays for when it reopens. */}
       </Route>
     </Route>
 

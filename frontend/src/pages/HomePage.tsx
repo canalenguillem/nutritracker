@@ -43,15 +43,15 @@ export const HomePage = () => (
             útiles, revisa los detalles y decide siempre tú.
           </p>
           <div className="hero__actions">
-            <Link className="button button--primary" to="/register">
-              Crear cuenta gratis
+            <Link className="button button--primary" to="/login">
+              Iniciar sesión
               <svg viewBox="0 0 20 20" aria-hidden="true">
                 <path d="m7 4 6 6-6 6" />
               </svg>
             </Link>
-            <Link className="text-link" to="/login">
-              Ya tengo cuenta
-            </Link>
+            <a className="text-link" href="#como-funciona">
+              Descubrir cómo funciona
+            </a>
           </div>
           <p className="hero__trust">
             <svg viewBox="0 0 20 20" aria-hidden="true">
