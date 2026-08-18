@@ -6,7 +6,16 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 5 incluye, además de todo lo anterior:
+La Fase 6 incluye, además de todo lo anterior:
+
+- Junto a la descripción se puede adjuntar una foto de la tabla nutricional,
+  que el modelo lee para afinar la estimación.
+- La foto no se guarda: se envía al proveedor para leerla y se descarta.
+- Se aceptan JPEG, PNG y WebP hasta `MAX_UPLOAD_MB`, comprobando el contenido
+  del archivo y no su nombre ni el tipo declarado.
+- Una estimación con foto no reutiliza la que se hizo solo con palabras.
+
+La Fase 5 aportó la estimación escrita:
 
 - Estimación de una comida a partir de una descripción escrita: «un café con
   nata» devuelve alimentos, cantidades y macronutrientes.
@@ -55,8 +64,8 @@ La Fase 2 aportó la base sobre la que se apoya:
 - Alembic con la migración inicial de usuarios, perfiles, identidades y tokens.
 - Roles `user` y `admin`, repositorio y capa de servicio de usuarios.
 
-El perfil de usuario y la subida de fotografías pertenecen a fases
-posteriores.
+El perfil de usuario y el archivo de fotografías junto a la comida
+pertenecen a fases posteriores.
 
 Para habilitar el acceso con Google se deben definir `GOOGLE_CLIENT_ID`,
 `GOOGLE_CLIENT_SECRET` y `GOOGLE_REDIRECT_URI` en `.env`. Sin esos valores el

@@ -1,11 +1,11 @@
 # Implementation status
 
 The project is implemented sequentially according to the phases requested by the
-product owner. Phase 5 is complete: a meal described in words is turned into an
-estimate the person reviews before anything is stored. The estimator sits behind
-a port, so the flow is covered by tests without reaching the provider; running it
-against OpenAI requires a key in `.env`. The user profile and photograph upload
-remain intentionally deferred.
+product owner. Phase 6 is complete: a meal can be described in words and backed
+by a photograph of its nutrition label, which the estimator reads and then drops
+without storing it. Running the estimator against OpenAI requires a key in
+`.env`. The user profile and keeping photographs alongside a meal remain
+intentionally deferred.
 
 Run the development application with:
 
