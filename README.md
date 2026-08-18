@@ -6,7 +6,18 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 3 incluye, además de todo lo anterior:
+La Fase 4 incluye, además de todo lo anterior:
+
+- Registro manual de comidas con tantos alimentos como haga falta.
+- Diario diario con el desglose de cada comida y los totales del día.
+- Los totales se calculan siempre a partir de los alimentos; nunca se
+  aceptan desde la petición.
+- Cada comida se archiva en el día natural de la zona horaria de la cuenta,
+  de forma que una cena pasada la medianoche no cae en la víspera.
+- Consultas siempre limitadas a la persona propietaria: la comida de otra
+  cuenta es indistinguible de una que no existe.
+
+La Fase 3 aportó la autenticación:
 
 - Registro e inicio de sesión con correo electrónico y contraseña.
 - Contraseñas protegidas con Argon2 y tokens de acceso JWT de vida corta.
@@ -30,7 +41,7 @@ La Fase 2 aportó la base sobre la que se apoya:
 - Alembic con la migración inicial de usuarios, perfiles, identidades y tokens.
 - Roles `user` y `admin`, repositorio y capa de servicio de usuarios.
 
-El perfil de usuario, el registro de comidas y el análisis de fotografías
+El perfil de usuario, la subida de fotografías y el análisis con IA
 pertenecen a fases posteriores.
 
 Para habilitar el acceso con Google se deben definir `GOOGLE_CLIENT_ID`,
