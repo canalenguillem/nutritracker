@@ -2,9 +2,10 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
 from app.models.enums import MealSource, MealStatus, MealType
+from app.services.nutrition_check import kcal_from_macros, macros_disagree
 
 MAX_AMOUNT = Decimal("999999.99")
 
@@ -47,6 +48,14 @@ class MealItemResponse(BaseModel):
     fat_g: Decimal
     carbohydrates_g: Decimal
     user_confirmed: bool
+
+    @computed_field
+    def kcal_from_macros(self) -> Decimal:
+        return kcal_from_macros(self.protein_g, self.fat_g, self.carbohydrates_g)
+
+    @computed_field
+    def macros_disagree(self) -> bool:
+        return macros_disagree(self.kcal, self.protein_g, self.fat_g, self.carbohydrates_g)
 
 
 class MealResponse(BaseModel):

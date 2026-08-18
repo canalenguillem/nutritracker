@@ -105,6 +105,10 @@ La Fase 4 aportó el registro de comidas:
 - Diario diario con el desglose de cada comida y los totales del día.
 - Los totales se calculan siempre a partir de los alimentos; nunca se
   aceptan desde la petición.
+- Cada alimento se contrasta contra sus propios macronutrientes: si las
+  calorías declaradas y lo que suman proteínas, grasas e hidratos difieren más
+  de un 10 %, se avisa antes de guardar y en el diario. Una de las dos cifras
+  está mal, y sin el aviso el error entra en el balance del día.
 - Cada comida se archiva en el día natural de la zona horaria de la cuenta,
   de forma que una cena pasada la medianoche no cae en la víspera.
 - Consultas siempre limitadas a la persona propietaria: la comida de otra

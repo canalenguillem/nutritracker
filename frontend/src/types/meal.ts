@@ -29,7 +29,13 @@ export interface Macros {
   readonly carbohydratesG: number;
 }
 
-export interface MealItem extends Macros {
+/** Energy the macronutrients alone describe, and whether it contradicts the total. */
+export interface MacroCheck {
+  readonly kcalFromMacros: number;
+  readonly macrosDisagree: boolean;
+}
+
+export interface MealItem extends Macros, MacroCheck {
   readonly id: string;
   readonly name: string;
   readonly quantity: number;
@@ -61,7 +67,7 @@ export interface DailySummary extends Macros {
   readonly balanceKcal: number | null;
 }
 
-export interface EstimatedItem extends Macros {
+export interface EstimatedItem extends Macros, MacroCheck {
   readonly name: string;
   readonly quantity: number;
   readonly unit: string;

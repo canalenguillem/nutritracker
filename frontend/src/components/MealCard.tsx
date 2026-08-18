@@ -29,7 +29,17 @@ export const MealCard = ({ meal, onDelete, isDeleting }: MealCardProps) => (
     <ul className="meal-card__items">
       {meal.items.map((item) => (
         <li key={item.id}>
-          <span className="meal-card__item-name">{item.name}</span>
+          <span className="meal-card__item-name">
+            {item.name}
+            {item.macrosDisagree ? (
+              <span
+                className="meal-card__mismatch"
+                title={`Sus macros suman ${formatEnergy(item.kcalFromMacros)} kcal`}
+              >
+                revisar
+              </span>
+            ) : null}
+          </span>
           <span className="meal-card__item-quantity">
             {formatQuantity(item.quantity, item.unit)}
           </span>

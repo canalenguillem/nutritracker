@@ -48,6 +48,13 @@ export const EstimatePanel = ({ estimate }: EstimatePanelProps) => (
           {formatConfidence(item.confidence) ? (
             <span className="estimate__confidence">{formatConfidence(item.confidence)}</span>
           ) : null}
+          {item.macrosDisagree ? (
+            <p className="estimate__mismatch">
+              Sus macros suman {formatEnergy(item.kcalFromMacros)} kcal, no{" "}
+              {formatEnergy(item.kcal)}. Una de las dos cifras está mal; revísala antes de
+              guardar.
+            </p>
+          ) : null}
           {item.assumptions.length > 0 ? (
             <ul className="estimate__assumptions">
               {item.assumptions.map((assumption) => (

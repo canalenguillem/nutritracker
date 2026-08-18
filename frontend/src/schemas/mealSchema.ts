@@ -26,6 +26,8 @@ export const mealItemResponseSchema = z
     fat_g: z.string(),
     carbohydrates_g: z.string(),
     user_confirmed: z.boolean(),
+    kcal_from_macros: z.string(),
+    macros_disagree: z.boolean(),
   })
   .passthrough();
 
@@ -112,6 +114,8 @@ export const estimatedItemResponseSchema = z
     carbohydrates_g: z.string(),
     confidence: z.string().nullable(),
     assumptions: z.array(z.string()),
+    kcal_from_macros: z.string(),
+    macros_disagree: z.boolean(),
   })
   .passthrough();
 

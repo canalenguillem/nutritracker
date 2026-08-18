@@ -2528,3 +2528,25 @@ select.form-field__input {
   font-weight: 700;
   text-underline-offset: 0.2rem;
 }
+
+.estimate__mismatch {
+  margin: 0.2rem 0 0;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.5rem;
+  background: rgb(184 107 40 / 10%);
+  color: var(--color-warning);
+  font-size: 0.79rem;
+  line-height: 1.45;
+}
+
+.meal-card__mismatch {
+  margin-left: 0.45rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: rgb(184 107 40 / 14%);
+  color: var(--color-warning);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}

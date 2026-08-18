@@ -44,6 +44,8 @@ const toMealItem = (response: MealItemResponse): MealItem => ({
   proteinG: Number(response.protein_g),
   fatG: Number(response.fat_g),
   carbohydratesG: Number(response.carbohydrates_g),
+  kcalFromMacros: Number(response.kcal_from_macros),
+  macrosDisagree: response.macros_disagree,
 });
 
 const toMeal = (response: MealResponse): Meal => ({
@@ -152,6 +154,8 @@ export const describeMeal = async ({
       carbohydratesG: Number(item.carbohydrates_g),
       confidence: item.confidence === null ? null : Number(item.confidence),
       assumptions: item.assumptions,
+      kcalFromMacros: Number(item.kcal_from_macros),
+      macrosDisagree: item.macros_disagree,
     })),
     questions: estimate.questions.map((question) => ({
       key: question.key,
