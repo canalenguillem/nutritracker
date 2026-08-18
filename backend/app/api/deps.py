@@ -16,6 +16,7 @@ from app.repositories.users import SQLAlchemyUserRepository
 from app.security.tokens import TokenValidationError, decode_access_token
 from app.services.auth import AuthService, RequestContext
 from app.services.food_analysis import FoodAnalysisService
+from app.services.food_estimate_cache import RedisFoodEstimateCache
 from app.services.google_oauth import GoogleOAuthService
 from app.services.meals import MealService
 from app.services.oauth_state import RedisOAuthStateStore
@@ -68,10 +69,16 @@ def get_meal_service(session: SessionDependency) -> MealService:
 MealServiceDependency = Annotated[MealService, Depends(get_meal_service)]
 
 
-def get_food_analysis_service(settings: SettingsDependency) -> FoodAnalysisService:
-    if not settings.food_analysis_enabled:
-        return FoodAnalysisService(None)
-    return FoodAnalysisService(OpenAIFoodAnalyzer(settings))
+def get_food_analysis_service(
+    request: Request, settings: SettingsDependency
+) -> FoodAnalysisService:
+    cache = RedisFoodEstimateCache(
+        request.app.state.redis_client,
+        model=settings.openai_model,
+        prompt_version=settings.openai_prompt_version,
+    )
+    analyzer = OpenAIFoodAnalyzer(settings) if settings.food_analysis_enabled else None
+    return FoodAnalysisService(analyzer, cache)
 
 
 FoodAnalysisServiceDependency = Annotated[FoodAnalysisService, Depends(get_food_analysis_service)]

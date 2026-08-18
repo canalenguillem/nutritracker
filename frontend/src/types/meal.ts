@@ -71,4 +71,5 @@ export interface FoodEstimate {
   readonly questions: readonly ClarificationQuestion[];
   readonly confidence: number | null;
   readonly warning: string;
+  readonly fromCache: boolean;
 }

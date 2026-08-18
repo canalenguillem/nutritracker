@@ -114,6 +114,7 @@ export const describeMeal = async (description: string): Promise<FoodEstimate> =
     totalKcal: Number(estimate.total_kcal),
     confidence: estimate.confidence === null ? null : Number(estimate.confidence),
     warning: estimate.warning,
+    fromCache: estimate.from_cache,
     items: estimate.items.map((item) => ({
       name: item.name,
       quantity: Number(item.quantity),

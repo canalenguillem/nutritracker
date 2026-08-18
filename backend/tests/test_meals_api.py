@@ -18,7 +18,7 @@ from app.services.food_analysis import (
     FoodAnalysisService,
     FoodEstimate,
 )
-from fakes import FakeFoodAnalyzer
+from fakes import FakeFoodAnalyzer, FakeFoodEstimateCache
 
 MEAL = {
     "meal_type": "lunch",
@@ -284,9 +284,13 @@ COFFEE_ESTIMATE = FoodEstimate(
 )
 
 
-def use_analyzer(application: FastAPI, analyzer: FakeFoodAnalyzer) -> None:
+def use_analyzer(
+    application: FastAPI,
+    analyzer: FakeFoodAnalyzer,
+    cache: FakeFoodEstimateCache | None = None,
+) -> None:
     application.dependency_overrides[get_food_analysis_service] = lambda: FoodAnalysisService(
-        analyzer
+        analyzer, cache
     )
 
 
@@ -348,3 +352,25 @@ async def test_describing_a_meal_requires_authentication(client: AsyncClient) ->
     response = await client.post("/api/v1/meals/describe", json={"description": "café con nata"})
 
     assert response.status_code == 401
+
+
+async def test_repeating_a_description_does_not_reach_the_provider_again(
+    client: AsyncClient, application: FastAPI
+) -> None:
+    headers = await sign_up(client)
+    analyzer = FakeFoodAnalyzer(estimate=COFFEE_ESTIMATE)
+    use_analyzer(application, analyzer, FakeFoodEstimateCache())
+
+    first = await client.post(
+        "/api/v1/meals/describe", json={"description": "Un café con nata"}, headers=headers
+    )
+    second = await client.post(
+        "/api/v1/meals/describe", json={"description": "un café con nata"}, headers=headers
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert len(analyzer.calls) == 1
+    assert first.json()["from_cache"] is False
+    assert second.json()["from_cache"] is True
+    assert second.json()["items"] == first.json()["items"]

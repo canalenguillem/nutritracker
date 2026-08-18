@@ -90,7 +90,7 @@ async def describe_meal(
 ) -> FoodEstimateResponse:
     """Estimate a meal from a written description. Nothing is stored."""
     try:
-        estimate = await analysis.describe(payload.description, user.locale)
+        estimate = await analysis.describe(user.id, payload.description, user.locale)
     except FoodAnalysisDisabledError as error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -201,6 +201,7 @@ def _to_estimate_response(estimate: FoodEstimate) -> FoodEstimateResponse:
         ],
         confidence=estimate.confidence,
         warning=estimate.warning,
+        from_cache=estimate.from_cache,
     )
 
 

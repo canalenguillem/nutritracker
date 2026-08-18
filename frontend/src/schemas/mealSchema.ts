@@ -122,5 +122,6 @@ export const foodEstimateResponseSchema = z
     questions: z.array(clarificationQuestionResponseSchema),
     confidence: z.string().nullable(),
     warning: z.string(),
+    from_cache: z.boolean(),
   })
   .passthrough();

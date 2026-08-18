@@ -12,7 +12,10 @@ export const EstimatePanel = ({ estimate }: EstimatePanelProps) => (
   <section className="estimate" aria-label="Estimación de la comida">
     <header className="estimate__header">
       <div>
-        <p className="estimate__eyebrow">Estimación</p>
+        <p className="estimate__eyebrow">
+          Estimación
+          {estimate.fromCache ? <span className="estimate__reused">ya la tenías</span> : null}
+        </p>
         <h2>{estimate.summary || "Comida estimada"}</h2>
       </div>
       <div className="estimate__energy">
@@ -22,6 +25,9 @@ export const EstimatePanel = ({ estimate }: EstimatePanelProps) => (
     </header>
 
     <p className="estimate__lede">
+      {estimate.fromCache
+        ? "Ya habías descrito esta comida, así que reutilizamos aquella estimación sin volver a consultar a la IA. "
+        : ""}
       Hemos rellenado el formulario con estos valores. Corrige lo que no encaje antes de
       guardar: nada se guarda hasta que lo confirmes.
       {formatConfidence(estimate.confidence)

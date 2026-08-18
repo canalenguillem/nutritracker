@@ -32,3 +32,4 @@ class FoodEstimateResponse(BaseModel):
     questions: list[ClarificationQuestionResponse]
     confidence: Decimal | None
     warning: str
+    from_cache: bool

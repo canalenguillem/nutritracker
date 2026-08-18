@@ -1,5 +1,6 @@
 import json
 from decimal import Decimal
+from uuid import uuid4
 
 import pytest
 
@@ -10,9 +11,12 @@ from app.services.food_analysis import (
     FoodAnalysisService,
     FoodEstimate,
     InvalidAnalysisResponseError,
+    normalize_description,
 )
 from app.services.openai_food_analyzer import _to_estimate
-from fakes import FakeFoodAnalyzer
+from fakes import FakeFoodAnalyzer, FakeFoodEstimateCache
+
+USER_ID = uuid4()
 
 COFFEE = FoodEstimate(
     summary="Café con nata",
@@ -48,13 +52,13 @@ async def test_the_service_reports_when_no_provider_is_configured() -> None:
 
     assert service.enabled is False
     with pytest.raises(FoodAnalysisDisabledError):
-        await service.describe("café con nata")
+        await service.describe(USER_ID, "café con nata")
 
 
 async def test_the_service_totals_the_items_itself() -> None:
     service = FoodAnalysisService(FakeFoodAnalyzer(estimate=COFFEE))
 
-    estimate = await service.describe("café con nata")
+    estimate = await service.describe(USER_ID, "café con nata")
 
     # The provider claimed 999; the sum of the items is what counts.
     assert estimate.total_kcal == Decimal("60.00")
@@ -64,7 +68,7 @@ async def test_the_service_passes_the_account_language() -> None:
     analyzer = FakeFoodAnalyzer(estimate=COFFEE)
     service = FoodAnalysisService(analyzer)
 
-    await service.describe("  café con nata  ", "es")
+    await service.describe(USER_ID, "  café con nata  ", "es")
 
     assert analyzer.calls == [("café con nata", "es")]
 
@@ -73,7 +77,7 @@ async def test_an_empty_description_is_refused() -> None:
     service = FoodAnalysisService(FakeFoodAnalyzer(estimate=COFFEE))
 
     with pytest.raises(InvalidAnalysisResponseError):
-        await service.describe("   ")
+        await service.describe(USER_ID, "   ")
 
 
 async def test_an_estimate_without_food_is_refused() -> None:
@@ -81,14 +85,14 @@ async def test_an_estimate_without_food_is_refused() -> None:
     service = FoodAnalysisService(FakeFoodAnalyzer(estimate=empty))
 
     with pytest.raises(InvalidAnalysisResponseError):
-        await service.describe("una piedra")
+        await service.describe(USER_ID, "una piedra")
 
 
 async def test_a_provider_failure_surfaces_as_an_analysis_error() -> None:
     service = FoodAnalysisService(FakeFoodAnalyzer(error=FoodAnalysisError()))
 
     with pytest.raises(FoodAnalysisError):
-        await service.describe("café con nata")
+        await service.describe(USER_ID, "café con nata")
 
 
 def test_a_provider_payload_is_mapped_to_the_domain() -> None:
@@ -165,3 +169,53 @@ def test_a_negative_amount_is_refused() -> None:
 
     with pytest.raises(InvalidAnalysisResponseError):
         _to_estimate(payload, "v1")
+
+
+async def test_a_repeated_description_is_served_without_the_provider() -> None:
+    analyzer = FakeFoodAnalyzer(estimate=COFFEE)
+    cache = FakeFoodEstimateCache()
+    service = FoodAnalysisService(analyzer, cache)
+
+    first = await service.describe(USER_ID, "Un café con nata")
+    second = await service.describe(USER_ID, "un  café con nata.")
+
+    assert len(analyzer.calls) == 1
+    assert first.from_cache is False
+    assert second.from_cache is True
+    assert second.total_kcal == first.total_kcal
+    assert [item.name for item in second.items] == [item.name for item in first.items]
+
+
+async def test_another_account_does_not_read_the_first_ones_estimate() -> None:
+    analyzer = FakeFoodAnalyzer(estimate=COFFEE)
+    service = FoodAnalysisService(analyzer, FakeFoodEstimateCache())
+
+    await service.describe(USER_ID, "café con nata")
+    await service.describe(uuid4(), "café con nata")
+
+    assert len(analyzer.calls) == 2
+
+
+async def test_a_remembered_estimate_survives_an_unconfigured_provider() -> None:
+    cache = FakeFoodEstimateCache()
+    stored = FoodAnalysisService(FakeFoodAnalyzer(estimate=COFFEE), cache)
+    await stored.describe(USER_ID, "café con nata")
+
+    without_provider = FoodAnalysisService(None, cache)
+    estimate = await without_provider.describe(USER_ID, "café con nata")
+
+    assert estimate.from_cache is True
+
+
+async def test_an_unknown_description_still_needs_a_provider() -> None:
+    service = FoodAnalysisService(None, FakeFoodEstimateCache())
+
+    with pytest.raises(FoodAnalysisDisabledError):
+        await service.describe(USER_ID, "tortilla de patatas")
+
+
+def test_the_same_meal_typed_differently_shares_a_key() -> None:
+    assert normalize_description("  Un CAFÉ con nata. ") == normalize_description(
+        "un café con nata"
+    )
+    assert normalize_description("café  con   nata") == "café con nata"

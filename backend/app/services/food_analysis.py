@@ -1,8 +1,11 @@
+import re
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Protocol
+from uuid import UUID
 
 TWO_PLACES = Decimal("0.01")
+WHITESPACE = re.compile(r"\s+")
 
 
 class FoodAnalysisDisabledError(Exception):
@@ -45,10 +48,23 @@ class FoodEstimate:
     questions: list[ClarificationQuestion] = field(default_factory=list)
     confidence: Decimal | None = None
     warning: str = ""
+    from_cache: bool = False
 
 
 class FoodAnalyzer(Protocol):
     async def describe(self, description: str, language: str) -> FoodEstimate: ...
+
+
+class FoodEstimateCache(Protocol):
+    async def get(self, user_id: UUID, description: str) -> FoodEstimate | None: ...
+
+    async def set(self, user_id: UUID, description: str, estimate: FoodEstimate) -> None: ...
+
+
+def normalize_description(description: str) -> str:
+    """Fold the harmless differences between two ways of typing the same meal."""
+    collapsed = WHITESPACE.sub(" ", description).strip().lower()
+    return collapsed.strip(" .,;:!¡?¿")
 
 
 def round_amount(value: Decimal) -> Decimal:
@@ -61,30 +77,50 @@ def total_energy(items: list[EstimatedItem]) -> Decimal:
 
 
 class FoodAnalysisService:
-    def __init__(self, analyzer: FoodAnalyzer | None) -> None:
+    def __init__(
+        self, analyzer: FoodAnalyzer | None, cache: FoodEstimateCache | None = None
+    ) -> None:
         self._analyzer = analyzer
+        self._cache = cache
 
     @property
     def enabled(self) -> bool:
         return self._analyzer is not None
 
-    async def describe(self, description: str, language: str = "es") -> FoodEstimate:
-        if self._analyzer is None:
-            raise FoodAnalysisDisabledError
-
+    async def describe(self, user_id: UUID, description: str, language: str = "es") -> FoodEstimate:
         cleaned = description.strip()
         if not cleaned:
             raise InvalidAnalysisResponseError("The description is empty.")
+
+        key = normalize_description(cleaned)
+
+        # A repeat of the same meal costs nothing and answers immediately.
+        if self._cache is not None:
+            remembered = await self._cache.get(user_id, key)
+            if remembered is not None:
+                return _with_totals(remembered, from_cache=True)
+
+        if self._analyzer is None:
+            raise FoodAnalysisDisabledError
 
         estimate = await self._analyzer.describe(cleaned, language)
         if not estimate.items:
             raise InvalidAnalysisResponseError("The estimate contains no food.")
 
-        return FoodEstimate(
-            summary=estimate.summary,
-            items=estimate.items,
-            total_kcal=total_energy(estimate.items),
-            questions=estimate.questions,
-            confidence=estimate.confidence,
-            warning=estimate.warning,
-        )
+        fresh = _with_totals(estimate, from_cache=False)
+        if self._cache is not None:
+            await self._cache.set(user_id, key, fresh)
+
+        return fresh
+
+
+def _with_totals(estimate: FoodEstimate, from_cache: bool) -> FoodEstimate:
+    return FoodEstimate(
+        summary=estimate.summary,
+        items=estimate.items,
+        total_kcal=total_energy(estimate.items),
+        questions=estimate.questions,
+        confidence=estimate.confidence,
+        warning=estimate.warning,
+        from_cache=from_cache,
+    )

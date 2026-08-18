@@ -1887,3 +1887,15 @@ select.form-field__input {
     align-items: center;
   }
 }
+
+.estimate__reused {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--color-green-light);
+  color: var(--color-green-dark);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}

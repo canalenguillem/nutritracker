@@ -140,3 +140,14 @@ class FakeFoodAnalyzer:
         if self.estimate is None:
             raise AssertionError("The fake analyzer has no estimate configured.")
         return self.estimate
+
+
+@dataclass
+class FakeFoodEstimateCache:
+    entries: dict[tuple[UUID, str], FoodEstimate] = field(default_factory=dict)
+
+    async def get(self, user_id: UUID, description: str) -> FoodEstimate | None:
+        return self.entries.get((user_id, description))
+
+    async def set(self, user_id: UUID, description: str, estimate: FoodEstimate) -> None:
+        self.entries[(user_id, description)] = estimate
