@@ -2043,3 +2043,29 @@ select.form-field__input {
   text-decoration: underline;
   text-underline-offset: 0.2rem;
 }
+
+.draft-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgb(184 107 40 / 28%);
+  border-radius: 0.9rem;
+  background: rgb(216 236 133 / 28%);
+  color: var(--color-ink);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.draft-notice button {
+  border: none;
+  background: none;
+  color: var(--color-green-dark);
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}

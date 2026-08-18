@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { setAccessToken } from "../../api/accessTokenStore";
 import { login, logout, refreshSession, registerAccount } from "../../api/authApi";
 import { refreshSessionOnce, registerSessionRefreshHandler } from "../../api/sessionRefresh";
+import { clearDraft } from "../meals/mealDraft";
 import type {
   AuthStatus,
   AuthenticatedUser,
@@ -84,6 +85,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } finally {
       clearSession();
       queryClient.clear();
+      // The draft can hold what someone was writing about themselves.
+      clearDraft();
     }
   }, [clearSession, queryClient]);
 

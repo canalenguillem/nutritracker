@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -7,6 +7,14 @@ import { EstimatePanel } from "../components/EstimatePanel";
 import { FormField } from "../components/FormField";
 import { mealTypeOptions } from "../features/meals/mealLabels";
 import { getMealErrorMessage } from "../features/meals/mealErrors";
+import {
+  clearDraft,
+  dataUrlToFile,
+  isDraftWorthKeeping,
+  loadDraft,
+  readPhotoAsDataUrl,
+  saveDraft,
+} from "../features/meals/mealDraft";
 import { formatFileSize, preparePhoto } from "../features/meals/photoPreparation";
 import { useCreateMeal, useDescribeMeal } from "../features/meals/useMeals";
 import { mealFormSchema } from "../schemas/mealSchema";
@@ -56,16 +64,22 @@ export const AddMealPage = () => {
   const [isPreparingPhoto, setIsPreparingPhoto] = useState(false);
   const cameraInput = useRef<HTMLInputElement>(null);
   const galleryInput = useRef<HTMLInputElement>(null);
+  const [restoredDraft] = useState(() => loadDraft());
+  const [wasRestored, setWasRestored] = useState(false);
+  const photoDataUrl = useRef<string | null>(null);
   const [now] = useState(() => new Date());
 
   const {
     control,
     register,
     handleSubmit,
+    watch,
+    reset,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<MealFormValues>({
     resolver: zodResolver(mealFormSchema),
-    defaultValues: {
+    defaultValues: restoredDraft?.values ?? {
       mealType: "lunch",
       day: todayValue(now),
       time: timeValue(now),
@@ -75,6 +89,43 @@ export const AddMealPage = () => {
   });
 
   const { fields, append, remove, replace } = useFieldArray({ control, name: "items" });
+
+  // Pick the draft back up after the browser rebuilt the page.
+  useEffect(() => {
+    if (!restoredDraft) {
+      return;
+    }
+
+    setDescription(restoredDraft.description);
+    if (restoredDraft.photoDataUrl) {
+      photoDataUrl.current = restoredDraft.photoDataUrl;
+      setPhoto(dataUrlToFile(restoredDraft.photoDataUrl));
+    }
+    setWasRestored(true);
+  }, [restoredDraft]);
+
+  // Saving on every render would rewrite the stored photo each time, so this
+  // only runs when something actually changed.
+  const persistDraft = useCallback(() => {
+    const values = getValues();
+    if (!isDraftWorthKeeping(values, description)) {
+      // An emptied form has to remove the stored copy, or it comes back.
+      clearDraft();
+      return;
+    }
+
+    saveDraft({ values, description, photoDataUrl: photoDataUrl.current });
+  }, [description, getValues]);
+
+  useEffect(() => {
+    const subscription = watch(() => persistDraft());
+
+    return () => subscription.unsubscribe();
+  }, [persistDraft, watch]);
+
+  useEffect(() => {
+    persistDraft();
+  }, [persistDraft, photo]);
 
   // The preview holds an object URL, which has to be handed back.
   useEffect(() => {
@@ -96,14 +147,31 @@ export const AddMealPage = () => {
 
     setIsPreparingPhoto(true);
     try {
-      setPhoto(await preparePhoto(file));
+      const prepared = await preparePhoto(file);
+      photoDataUrl.current = await readPhotoAsDataUrl(prepared);
+      setPhoto(prepared);
     } finally {
       setIsPreparingPhoto(false);
     }
   };
 
+  const startAgain = () => {
+    clearDraft();
+    setWasRestored(false);
+    setDescription("");
+    clearPhoto();
+    reset({
+      mealType: "lunch",
+      day: todayValue(now),
+      time: timeValue(now),
+      notes: "",
+      items: [EMPTY_ITEM],
+    });
+  };
+
   const clearPhoto = () => {
     setPhoto(null);
+    photoDataUrl.current = null;
     if (cameraInput.current) {
       cameraInput.current.value = "";
     }
@@ -130,6 +198,7 @@ export const AddMealPage = () => {
 
     try {
       await createMeal.mutateAsync(values);
+      clearDraft();
       navigate("/dashboard", { replace: true });
     } catch (error) {
       setSubmissionError(getMealErrorMessage(error));
@@ -139,6 +208,16 @@ export const AddMealPage = () => {
   return (
     <section className="add-meal">
       <div className="container add-meal__content">
+        {wasRestored ? (
+          <p className="draft-notice" role="status">
+            Hemos recuperado lo que estabas escribiendo. El móvil a veces cierra la página
+            mientras haces la foto.
+            <button type="button" onClick={startAgain}>
+              Empezar de nuevo
+            </button>
+          </p>
+        ) : null}
+
         <div className="add-meal__heading">
           <p className="eyebrow">
             <span aria-hidden="true">✦</span>
