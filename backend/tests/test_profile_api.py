@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from decimal import Decimal
 from typing import Any
 
 import pytest
@@ -180,3 +181,46 @@ async def test_another_account_cannot_remove_a_reading(client: AsyncClient) -> N
 async def test_weights_require_authentication(client: AsyncClient) -> None:
     assert (await client.get("/api/v1/weights/history")).status_code == 401
     assert (await client.get("/api/v1/profile")).status_code == 401
+
+
+async def test_the_history_projects_the_target_date(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    await client.patch("/api/v1/profile", json={"target_weight_kg": "78.00"}, headers=headers)
+
+    # A month of steady loss, one reading a day.
+    for day in range(30):
+        weight = Decimal("82.00") - Decimal("0.05") * day
+        await weigh(client, headers, f"{weight:.2f}", f"2026-07-{day + 1:02d}T08:00:00")
+
+    response = await client.get("/api/v1/weights/history", headers=headers)
+
+    assert response.status_code == 200, response.text
+    projection = response.json()["projection"]
+    assert projection["status"] == "reachable"
+    assert projection["days_to_target"] > 0
+    assert projection["reaches_target_on"] > "2026-07-30"
+    assert Decimal(projection["kg_per_week"]) < Decimal("0")
+
+
+async def test_a_target_in_the_wrong_direction_is_flagged(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    await client.patch("/api/v1/profile", json={"target_weight_kg": "70.00"}, headers=headers)
+
+    for day in range(30):
+        weight = Decimal("82.00") + Decimal("0.05") * day
+        await weigh(client, headers, f"{weight:.2f}", f"2026-07-{day + 1:02d}T08:00:00")
+
+    projection = (await client.get("/api/v1/weights/history", headers=headers)).json()["projection"]
+
+    assert projection["status"] == "wrong_way"
+    assert projection["reaches_target_on"] is None
+
+
+async def test_without_a_target_nothing_is_projected(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    await weigh(client, headers, "80.00", "2026-08-18T08:00:00")
+
+    projection = (await client.get("/api/v1/weights/history", headers=headers)).json()["projection"]
+
+    assert projection["status"] == "not_enough_data"
+    assert projection["reaches_target_on"] is None

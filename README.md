@@ -15,6 +15,11 @@ La Fase 9 incluye, además de todo lo anterior:
   además de grasa, y la tendencia es lo que separa una cosa de la otra.
 - Gráfica con las lecturas, la tendencia y la línea del objetivo, y cambio a 7 y
   30 días calculado sobre la tendencia, no sobre la última pesada.
+- Fecha estimada para alcanzar el objetivo, prolongando el ritmo de las últimas
+  cuatro semanas, dibujada en la gráfica hasta cruzar la línea del objetivo. Se
+  presenta como prolongación de un hábito y no como una promesa, y dice cuándo
+  no puede dar una fecha: sin objetivo, con la tendencia plana, yendo en
+  dirección contraria o con la fecha a años de distancia.
 - IMC estimado a partir de la tendencia y la estatura, presentado como
   estimación y sin decir nada sobre la composición corporal.
 - El último peso registrado alimenta la estimación de gasto del ejercicio, que

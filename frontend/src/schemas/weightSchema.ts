@@ -22,6 +22,22 @@ export const weightPointResponseSchema = z
   })
   .passthrough();
 
+export const trendProjectionResponseSchema = z
+  .object({
+    status: z.enum([
+      "reachable",
+      "already_there",
+      "wrong_way",
+      "too_flat",
+      "not_enough_data",
+      "too_far",
+    ]),
+    kg_per_week: z.string().nullable(),
+    reaches_target_on: z.string().nullable(),
+    days_to_target: z.number().int().nullable(),
+  })
+  .passthrough();
+
 export const weightHistoryResponseSchema = z
   .object({
     points: z.array(weightPointResponseSchema),
@@ -31,6 +47,7 @@ export const weightHistoryResponseSchema = z
     change_30_days_kg: z.string().nullable(),
     target_weight_kg: z.string().nullable(),
     body_mass_index: z.string().nullable(),
+    projection: trendProjectionResponseSchema,
   })
   .passthrough();
 

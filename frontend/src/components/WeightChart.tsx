@@ -8,6 +8,8 @@ const PADDING_Y = 18;
 interface WeightChartProps {
   readonly points: readonly WeightPoint[];
   readonly targetWeightKg: number | null;
+  /** The day the trend would meet the target, drawn as a dashed continuation. */
+  readonly reachesTargetOn: string | null;
 }
 
 const toOrdinal = (isoDay: string): number => {
@@ -16,14 +18,24 @@ const toOrdinal = (isoDay: string): number => {
   return Date.UTC(year, month - 1, day) / 86_400_000;
 };
 
-export const WeightChart = ({ points, targetWeightKg }: WeightChartProps) => {
+export const WeightChart = ({
+  points,
+  targetWeightKg,
+  reachesTargetOn,
+}: WeightChartProps) => {
   if (points.length === 0) {
     return null;
   }
 
   const days = points.map((point) => toOrdinal(point.measuredOn));
   const firstDay = days[0] ?? 0;
-  const lastDay = days[days.length - 1] ?? firstDay;
+  const lastReadingDay = days[days.length - 1] ?? firstDay;
+  const latest = points[points.length - 1];
+
+  // The projection extends the horizontal range, so the meeting point fits.
+  const projectedDay =
+    reachesTargetOn !== null && targetWeightKg !== null ? toOrdinal(reachesTargetOn) : null;
+  const lastDay = projectedDay !== null ? Math.max(lastReadingDay, projectedDay) : lastReadingDay;
   const daySpan = Math.max(lastDay - firstDay, 1);
 
   const values = points.flatMap((point) => [point.weightKg, point.trendKg]);
@@ -51,8 +63,10 @@ export const WeightChart = ({ points, targetWeightKg }: WeightChartProps) => {
 
   const summary =
     `Evolución del peso entre ${points[0]?.measuredOn} y ` +
-    `${points[points.length - 1]?.measuredOn}, de ${lowest.toFixed(1)} a ` +
-    `${highest.toFixed(1)} kilos.`;
+    `${latest?.measuredOn}, de ${lowest.toFixed(1)} a ${highest.toFixed(1)} kilos.` +
+    (reachesTargetOn !== null
+      ? ` La tendencia alcanzaría el objetivo el ${reachesTargetOn}.`
+      : "");
 
   return (
     <figure className="weight-chart">
@@ -68,6 +82,24 @@ export const WeightChart = ({ points, targetWeightKg }: WeightChartProps) => {
         ) : null}
 
         {points.length > 1 ? <path className="weight-chart__trend" d={trendPath} /> : null}
+
+        {projectedDay !== null && targetWeightKg !== null && latest ? (
+          <>
+            <line
+              className="weight-chart__projection"
+              x1={toX(lastReadingDay)}
+              y1={toY(latest.trendKg)}
+              x2={toX(projectedDay)}
+              y2={toY(targetWeightKg)}
+            />
+            <circle
+              className="weight-chart__goal"
+              cx={toX(projectedDay)}
+              cy={toY(targetWeightKg)}
+              r={5}
+            />
+          </>
+        ) : null}
 
         {points.map((point, index) => (
           <circle
@@ -86,6 +118,11 @@ export const WeightChart = ({ points, targetWeightKg }: WeightChartProps) => {
         </span>
         {targetWeightKg !== null ? (
           <span className="weight-chart__key weight-chart__key--target">Objetivo</span>
+        ) : null}
+        {projectedDay !== null ? (
+          <span className="weight-chart__key weight-chart__key--projection">
+            A este ritmo
+          </span>
         ) : null}
       </figcaption>
     </figure>

@@ -8,7 +8,13 @@ from app.models.weight import WeightEntry
 from app.repositories.user_profiles import UserProfileRepository
 from app.repositories.weights import WeightRepository
 from app.services.daily_logs import naive_utc
-from app.services.weight_trend import WeightPoint, build_trend, trend_change
+from app.services.weight_trend import (
+    TrendProjection,
+    WeightPoint,
+    build_trend,
+    project_target,
+    trend_change,
+)
 
 TWO_PLACES = Decimal("0.01")
 CENTIMETRES_PER_METRE = Decimal("100")
@@ -34,6 +40,7 @@ class WeightHistory:
     change_30_days_kg: Decimal | None = None
     target_weight_kg: Decimal | None = None
     body_mass_index: Decimal | None = None
+    projection: TrendProjection | None = None
 
 
 def body_mass_index(weight_kg: Decimal | None, height_cm: Decimal | None) -> Decimal | None:
@@ -79,17 +86,20 @@ class WeightService:
         profile = await self._profiles.get_for_user(user.id)
         latest = points[-1] if points else None
 
+        target = profile.target_weight_kg if profile else None
+
         return WeightHistory(
             points=points,
             latest_weight_kg=latest.weight_kg if latest else None,
             latest_trend_kg=latest.trend_kg if latest else None,
             change_7_days_kg=trend_change(points, 7),
             change_30_days_kg=trend_change(points, 30),
-            target_weight_kg=profile.target_weight_kg if profile else None,
+            target_weight_kg=target,
             body_mass_index=body_mass_index(
                 latest.trend_kg if latest else None,
                 profile.height_cm if profile else None,
             ),
+            projection=project_target(points, target),
         )
 
     async def _sync_current_weight(self, user: User) -> None:

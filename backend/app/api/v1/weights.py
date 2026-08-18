@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.api.deps import CurrentUserDependency, WeightServiceDependency
 from app.schemas.weights import (
+    TrendProjectionResponse,
     WeightCreateRequest,
     WeightEntryResponse,
     WeightHistoryResponse,
@@ -45,6 +46,14 @@ async def read_history(
         change_30_days_kg=history.change_30_days_kg,
         target_weight_kg=history.target_weight_kg,
         body_mass_index=history.body_mass_index,
+        projection=TrendProjectionResponse(
+            status=history.projection.status if history.projection else "not_enough_data",
+            kg_per_week=history.projection.kg_per_week if history.projection else None,
+            reaches_target_on=(
+                history.projection.reaches_target_on if history.projection else None
+            ),
+            days_to_target=history.projection.days_to_target if history.projection else None,
+        ),
     )
 
 

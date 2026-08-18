@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
+from typing import Literal
 
 from app.models.weight import WeightEntry
 from app.services.daily_logs import local_log_date
@@ -15,6 +16,26 @@ SMOOTHING = Decimal("0.1")
 # After a long silence the trend should reach the new reading rather than crawl,
 # but carrying forward for years would waste time to no effect.
 MAX_CARRIED_DAYS = 60
+
+# The window the rate of change is read over. Shorter than this and a single
+# wobble sets the direction; longer and a recent change of habit is invisible.
+RATE_WINDOW_DAYS = 28
+MIN_RATE_SPAN_DAYS = 7
+
+DAYS_PER_WEEK = Decimal("7")
+# Past this the arithmetic still works but the answer would be a fiction.
+MAX_PROJECTED_DAYS = 5 * 365
+# Within this much of the target, calling it reached is more useful than a date.
+TARGET_TOLERANCE_KG = Decimal("0.10")
+
+ProjectionStatus = Literal[
+    "reachable",
+    "already_there",
+    "wrong_way",
+    "too_flat",
+    "not_enough_data",
+    "too_far",
+]
 
 
 @dataclass(frozen=True)
@@ -80,3 +101,72 @@ def trend_change(points: list[WeightPoint], over_days: int) -> Decimal | None:
         return None
 
     return _round(latest.trend_kg - reference.trend_kg)
+
+
+@dataclass(frozen=True)
+class TrendProjection:
+    status: ProjectionStatus
+    kg_per_week: Decimal | None = None
+    reaches_target_on: date | None = None
+    days_to_target: int | None = None
+
+
+def weekly_rate(points: list[WeightPoint]) -> Decimal | None:
+    """How fast the trend is moving, in kilos a week.
+
+    Read from the trend rather than the readings, so a heavy dinner the night
+    before does not become a rate of change.
+    """
+    if len(points) < 2:
+        return None
+
+    latest = points[-1]
+    window_start = latest.measured_on - timedelta(days=RATE_WINDOW_DAYS)
+    within = [point for point in points if point.measured_on >= window_start]
+    reference = within[0] if len(within) >= 2 else points[0]
+
+    span_days = (latest.measured_on - reference.measured_on).days
+    if span_days < MIN_RATE_SPAN_DAYS:
+        return None
+
+    per_day = (latest.trend_kg - reference.trend_kg) / Decimal(span_days)
+    return _round(per_day * DAYS_PER_WEEK)
+
+
+def project_target(points: list[WeightPoint], target_kg: Decimal | None) -> TrendProjection:
+    """When the trend would meet the target if today's pace held.
+
+    It is an extrapolation of a habit, not a promise: the pace changes, and the
+    interface has to say so.
+    """
+    if target_kg is None or not points:
+        return TrendProjection(status="not_enough_data")
+
+    latest = points[-1]
+    remaining = target_kg - latest.trend_kg
+
+    if abs(remaining) <= TARGET_TOLERANCE_KG:
+        return TrendProjection(status="already_there", kg_per_week=weekly_rate(points))
+
+    rate = weekly_rate(points)
+    if rate is None:
+        return TrendProjection(status="not_enough_data")
+
+    if rate == 0:
+        return TrendProjection(status="too_flat", kg_per_week=rate)
+
+    # Both must point the same way: losing towards a lower target, or gaining
+    # towards a higher one.
+    if (remaining > 0) != (rate > 0):
+        return TrendProjection(status="wrong_way", kg_per_week=rate)
+
+    days = int((remaining / (rate / DAYS_PER_WEEK)).to_integral_value(rounding=ROUND_HALF_UP))
+    if days > MAX_PROJECTED_DAYS:
+        return TrendProjection(status="too_far", kg_per_week=rate)
+
+    return TrendProjection(
+        status="reachable",
+        kg_per_week=rate,
+        days_to_target=days,
+        reaches_target_on=latest.measured_on + timedelta(days=days),
+    )

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 
 import { FormField } from "../components/FormField";
 import { PageLoader } from "../components/PageLoader";
+import { TargetProjection } from "../components/TargetProjection";
 import { WeightChart } from "../components/WeightChart";
 import { getMealErrorMessage } from "../features/meals/mealErrors";
 import {
@@ -116,7 +117,16 @@ export const WeightPage = () => {
               </dl>
             </div>
 
-            <WeightChart points={points} targetWeightKg={data.targetWeightKg} />
+            <WeightChart
+              points={points}
+              targetWeightKg={data.targetWeightKg}
+              reachesTargetOn={data.projection.reachesTargetOn}
+            />
+
+            <TargetProjection
+              projection={data.projection}
+              targetWeightKg={data.targetWeightKg}
+            />
 
             <p className="dashboard__disclaimer">
               El IMC es una estimación y no dice nada sobre tu composición corporal.

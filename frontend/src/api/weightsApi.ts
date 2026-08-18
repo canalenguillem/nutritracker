@@ -34,6 +34,12 @@ const toHistory = (response: WeightHistoryResponse): WeightHistory => ({
   change30DaysKg: optionalNumber(response.change_30_days_kg),
   targetWeightKg: optionalNumber(response.target_weight_kg),
   bodyMassIndex: optionalNumber(response.body_mass_index),
+  projection: {
+    status: response.projection.status,
+    kgPerWeek: optionalNumber(response.projection.kg_per_week),
+    reachesTargetOn: response.projection.reaches_target_on,
+    daysToTarget: response.projection.days_to_target,
+  },
 });
 
 const toProfile = (response: ProfileResponse): Profile => ({

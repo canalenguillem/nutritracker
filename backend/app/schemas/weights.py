@@ -34,6 +34,13 @@ class WeightPointResponse(BaseModel):
     trend_kg: Decimal
 
 
+class TrendProjectionResponse(BaseModel):
+    status: str
+    kg_per_week: Decimal | None
+    reaches_target_on: date | None
+    days_to_target: int | None
+
+
 class WeightHistoryResponse(BaseModel):
     points: list[WeightPointResponse]
     latest_weight_kg: Decimal | None
@@ -42,3 +49,4 @@ class WeightHistoryResponse(BaseModel):
     change_30_days_kg: Decimal | None
     target_weight_kg: Decimal | None
     body_mass_index: Decimal | None
+    projection: TrendProjectionResponse
