@@ -57,6 +57,8 @@ async def http_error_handler(request: Request, exception: HTTPException) -> JSON
         status.HTTP_404_NOT_FOUND: "RESOURCE_NOT_FOUND",
         status.HTTP_409_CONFLICT: "CONFLICT",
         status.HTTP_429_TOO_MANY_REQUESTS: "RATE_LIMITED",
+        # The estimator is the only upstream this API talks to on a request.
+        status.HTTP_502_BAD_GATEWAY: "AI_ANALYSIS_FAILED",
         status.HTTP_503_SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
     }
     message = exception.detail if isinstance(exception.detail, str) else "The request failed."

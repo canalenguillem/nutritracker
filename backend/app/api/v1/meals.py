@@ -4,14 +4,29 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from app.api.deps import CurrentUserDependency, MealServiceDependency
+from app.api.deps import (
+    CurrentUserDependency,
+    FoodAnalysisServiceDependency,
+    MealServiceDependency,
+)
 from app.models.base import utc_now
+from app.schemas.analysis import (
+    ClarificationQuestionResponse,
+    DescribeMealRequest,
+    EstimatedItemResponse,
+    FoodEstimateResponse,
+)
 from app.schemas.meals import (
     DailySummaryResponse,
     MealCreateRequest,
     MealItemRequest,
     MealResponse,
     MealUpdateRequest,
+)
+from app.services.food_analysis import (
+    FoodAnalysisDisabledError,
+    FoodAnalysisError,
+    FoodEstimate,
 )
 from app.services.meals import (
     EmptyMealError,
@@ -65,6 +80,29 @@ async def read_daily_summary(
         fat_g=summary.totals.fat_g,
         carbohydrates_g=summary.totals.carbohydrates_g,
     )
+
+
+@router.post("/describe", response_model=FoodEstimateResponse)
+async def describe_meal(
+    payload: DescribeMealRequest,
+    user: CurrentUserDependency,
+    analysis: FoodAnalysisServiceDependency,
+) -> FoodEstimateResponse:
+    """Estimate a meal from a written description. Nothing is stored."""
+    try:
+        estimate = await analysis.describe(payload.description, user.locale)
+    except FoodAnalysisDisabledError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The food estimator is not configured.",
+        ) from error
+    except FoodAnalysisError as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="The meal could not be estimated. Try describing it again.",
+        ) from error
+
+    return _to_estimate_response(estimate)
 
 
 @router.post("", response_model=MealResponse, status_code=status.HTTP_201_CREATED)
@@ -135,6 +173,35 @@ async def delete_meal(
         await service.delete_meal(user, meal_id)
     except MealNotFoundError as error:
         raise _not_found() from error
+
+
+def _to_estimate_response(estimate: FoodEstimate) -> FoodEstimateResponse:
+    return FoodEstimateResponse(
+        summary=estimate.summary,
+        items=[
+            EstimatedItemResponse(
+                name=item.name,
+                quantity=item.quantity,
+                unit=item.unit,
+                kcal=item.kcal,
+                protein_g=item.protein_g,
+                fat_g=item.fat_g,
+                carbohydrates_g=item.carbohydrates_g,
+                confidence=item.confidence,
+                assumptions=item.assumptions,
+            )
+            for item in estimate.items
+        ],
+        total_kcal=estimate.total_kcal,
+        questions=[
+            ClarificationQuestionResponse(
+                key=question.key, question=question.question, options=question.options
+            )
+            for question in estimate.questions
+        ],
+        confidence=estimate.confidence,
+        warning=estimate.warning,
+    )
 
 
 def _not_found() -> HTTPException:

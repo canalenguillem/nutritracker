@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from decimal import Decimal
 from typing import Any
 
 import pytest
@@ -7,9 +8,17 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
+from app.api.deps import get_food_analysis_service
 from app.core.config import Settings
 from app.main import create_app
 from app.models.base import Base
+from app.services.food_analysis import (
+    EstimatedItem,
+    FoodAnalysisError,
+    FoodAnalysisService,
+    FoodEstimate,
+)
+from fakes import FakeFoodAnalyzer
 
 MEAL = {
     "meal_type": "lunch",
@@ -244,3 +253,98 @@ async def test_a_user_only_lists_their_own_meals(client: AsyncClient) -> None:
 
     assert response.status_code == 200
     assert response.json() == []
+
+
+COFFEE_ESTIMATE = FoodEstimate(
+    summary="Café con nata",
+    items=[
+        EstimatedItem(
+            name="Café solo",
+            quantity=Decimal("60"),
+            unit="ml",
+            kcal=Decimal("2.00"),
+            protein_g=Decimal("0.20"),
+            fat_g=Decimal("0.00"),
+            carbohydrates_g=Decimal("0.00"),
+            confidence=Decimal("0.9"),
+        ),
+        EstimatedItem(
+            name="Nata para café",
+            quantity=Decimal("20"),
+            unit="ml",
+            kcal=Decimal("58.00"),
+            protein_g=Decimal("0.40"),
+            fat_g=Decimal("6.00"),
+            carbohydrates_g=Decimal("0.60"),
+            confidence=Decimal("0.5"),
+            assumptions=["Se asume nata líquida para café"],
+        ),
+    ],
+    total_kcal=Decimal("60.00"),
+)
+
+
+def use_analyzer(application: FastAPI, analyzer: FakeFoodAnalyzer) -> None:
+    application.dependency_overrides[get_food_analysis_service] = lambda: FoodAnalysisService(
+        analyzer
+    )
+
+
+async def test_describing_a_meal_returns_an_estimate(
+    client: AsyncClient, application: FastAPI
+) -> None:
+    headers = await sign_up(client)
+    use_analyzer(application, FakeFoodAnalyzer(estimate=COFFEE_ESTIMATE))
+
+    response = await client.post(
+        "/api/v1/meals/describe", json={"description": "café con nata"}, headers=headers
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["total_kcal"] == "60.00"
+    assert [item["name"] for item in body["items"]] == ["Café solo", "Nata para café"]
+    assert body["items"][1]["assumptions"] == ["Se asume nata líquida para café"]
+
+
+async def test_describing_a_meal_stores_nothing(client: AsyncClient, application: FastAPI) -> None:
+    headers = await sign_up(client)
+    use_analyzer(application, FakeFoodAnalyzer(estimate=COFFEE_ESTIMATE))
+
+    await client.post(
+        "/api/v1/meals/describe", json={"description": "café con nata"}, headers=headers
+    )
+    meals = await client.get("/api/v1/meals", headers=headers)
+
+    assert meals.json() == []
+
+
+async def test_describing_a_meal_needs_a_configured_provider(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+
+    response = await client.post(
+        "/api/v1/meals/describe", json={"description": "café con nata"}, headers=headers
+    )
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "SERVICE_UNAVAILABLE"
+
+
+async def test_a_failing_provider_is_reported_as_an_analysis_error(
+    client: AsyncClient, application: FastAPI
+) -> None:
+    headers = await sign_up(client)
+    use_analyzer(application, FakeFoodAnalyzer(error=FoodAnalysisError()))
+
+    response = await client.post(
+        "/api/v1/meals/describe", json={"description": "café con nata"}, headers=headers
+    )
+
+    assert response.status_code == 502
+    assert response.json()["error"]["code"] == "AI_ANALYSIS_FAILED"
+
+
+async def test_describing_a_meal_requires_authentication(client: AsyncClient) -> None:
+    response = await client.post("/api/v1/meals/describe", json={"description": "café con nata"})
+
+    assert response.status_code == 401

@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     google_client_id: str = ""
     google_client_secret: SecretStr = SecretStr("")
     google_redirect_uri: AnyHttpUrl | None = None
+    openai_api_key: SecretStr = SecretStr("")
+    openai_model: str = ""
+    openai_prompt_version: str = "v1"
+    openai_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
 
     mariadb_host: str = "localhost"
     mariadb_port: int = Field(default=3306, ge=1, le=65535)
@@ -71,6 +75,10 @@ class Settings(BaseSettings):
             port=self.mariadb_port,
             database=self.mariadb_database,
         )
+
+    @property
+    def food_analysis_enabled(self) -> bool:
+        return bool(self.openai_api_key.get_secret_value() and self.openai_model)
 
     @property
     def google_oauth_enabled(self) -> bool:

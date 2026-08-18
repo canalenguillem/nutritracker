@@ -15,9 +15,11 @@ from app.repositories.refresh_tokens import SQLAlchemyRefreshTokenRepository
 from app.repositories.users import SQLAlchemyUserRepository
 from app.security.tokens import TokenValidationError, decode_access_token
 from app.services.auth import AuthService, RequestContext
+from app.services.food_analysis import FoodAnalysisService
 from app.services.google_oauth import GoogleOAuthService
 from app.services.meals import MealService
 from app.services.oauth_state import RedisOAuthStateStore
+from app.services.openai_food_analyzer import OpenAIFoodAnalyzer
 from app.services.users import UserNotFoundError, UserService
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -64,6 +66,15 @@ def get_meal_service(session: SessionDependency) -> MealService:
 
 
 MealServiceDependency = Annotated[MealService, Depends(get_meal_service)]
+
+
+def get_food_analysis_service(settings: SettingsDependency) -> FoodAnalysisService:
+    if not settings.food_analysis_enabled:
+        return FoodAnalysisService(None)
+    return FoodAnalysisService(OpenAIFoodAnalyzer(settings))
+
+
+FoodAnalysisServiceDependency = Annotated[FoodAnalysisService, Depends(get_food_analysis_service)]
 
 
 def get_google_oauth_service(request: Request, settings: SettingsDependency) -> GoogleOAuthService:

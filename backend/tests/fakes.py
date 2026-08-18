@@ -6,6 +6,7 @@ from app.models.base import utc_now
 from app.models.enums import AuthProvider, UserRole, UserStatus
 from app.models.meal import DailyLog, Meal
 from app.models.user import AuthIdentity, RefreshToken, User
+from app.services.food_analysis import FoodEstimate
 
 
 @dataclass
@@ -124,3 +125,18 @@ class FakeMealRepository:
         for meal in self.meals:
             for item in meal.items:
                 item.id = item.id or uuid4()
+
+
+@dataclass
+class FakeFoodAnalyzer:
+    estimate: FoodEstimate | None = None
+    error: Exception | None = None
+    calls: list[tuple[str, str]] = field(default_factory=list)
+
+    async def describe(self, description: str, language: str) -> FoodEstimate:
+        self.calls.append((description, language))
+        if self.error is not None:
+            raise self.error
+        if self.estimate is None:
+            raise AssertionError("The fake analyzer has no estimate configured.")
+        return self.estimate
