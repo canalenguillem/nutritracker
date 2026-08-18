@@ -190,3 +190,69 @@ async def test_the_daily_summary_counts_the_exercise(client: AsyncClient) -> Non
     assert body["exercise_kcal"] == "714.40"
     assert body["exercise_count"] == 1
     assert body["net_kcal"] == "85.60"
+
+
+async def test_the_summary_reports_a_deficit_once_the_profile_is_complete(
+    client: AsyncClient,
+) -> None:
+    headers = await sign_up(client)
+    await client.patch(
+        "/api/v1/profile",
+        json={
+            "height_cm": "174.00",
+            "birth_date": "1974-09-11",
+            "biological_sex": "male",
+            "activity_level": "moderate",
+        },
+        headers=headers,
+    )
+    await client.post(
+        "/api/v1/weights",
+        json={"weight_kg": "105.40", "measured_at": "2026-08-18T08:00:00"},
+        headers=headers,
+    )
+    await client.post(
+        "/api/v1/meals",
+        json={
+            "meal_type": "lunch",
+            "eaten_at": "2026-08-18T13:00:00",
+            "items": [
+                {
+                    "name": "Comida del día",
+                    "quantity": "1.00",
+                    "unit": "plato",
+                    "kcal": "1435.00",
+                    "protein_g": "105.90",
+                    "fat_g": "120.30",
+                    "carbohydrates_g": "10.80",
+                }
+            ],
+        },
+        headers=headers,
+    )
+    await record(client, headers, confirmed_calories="1059.00")
+
+    response = await client.get(
+        "/api/v1/meals/summary", params={"date": "2026-08-18"}, headers=headers
+    )
+
+    body = response.json()
+    assert body["balance_status"] == "estimated"
+    assert body["resting_kcal"] == "1892"
+    assert body["living_kcal"] == "2554"
+    assert body["total_expenditure_kcal"] == "3613"
+    assert body["balance_kcal"] == "-2178"
+
+
+async def test_the_summary_withholds_a_balance_without_a_profile(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    await record(client, headers, confirmed_calories="500.00")
+
+    response = await client.get(
+        "/api/v1/meals/summary", params={"date": "2026-08-18"}, headers=headers
+    )
+
+    body = response.json()
+    assert body["balance_status"] == "needs_profile"
+    assert body["balance_kcal"] is None
+    assert body["exercise_kcal"] == "500.00"

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { DailyBalance } from "../components/DailyBalance";
 import { ExerciseCard } from "../components/ExerciseCard";
 import { MacroTotals } from "../components/MacroTotals";
 import { MealCard } from "../components/MealCard";
@@ -10,7 +11,6 @@ import {
   useDayExercises,
   useDeleteExercise,
 } from "../features/exercises/useExercises";
-import { formatEnergy } from "../features/meals/mealLabels";
 import { getMealErrorMessage } from "../features/meals/mealErrors";
 import { useDailySummary, useDayMeals, useDeleteMeal } from "../features/meals/useMeals";
 
@@ -73,25 +73,12 @@ export const DashboardPage = () => {
             </div>
           </div>
           <MacroTotals macros={summary} />
-          {summary.exerciseCount > 0 ? (
-            <div className="dashboard__balance">
-              <p>
-                <span>Ejercicio</span>
-                <strong>−{formatEnergy(summary.exerciseKcal)} kcal</strong>
-              </p>
-              <p>
-                <span>Comida menos ejercicio</span>
-                <strong>{formatEnergy(summary.netKcal)} kcal</strong>
-              </p>
-            </div>
-          ) : null}
           <p className="dashboard__disclaimer">
             Los valores son estimaciones a partir de lo que has introducido.
-            {summary.exerciseCount > 0
-              ? " «Comida menos ejercicio» no es tu déficit: todavía no sabemos lo que gastas en reposo."
-              : ""}
           </p>
         </article>
+
+        <DailyBalance summary={summary} />
 
         <div className="dashboard__meals">
           <h2>Lo que has comido</h2>

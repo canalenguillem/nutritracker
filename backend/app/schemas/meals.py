@@ -79,6 +79,11 @@ class DailySummaryResponse(BaseModel):
     carbohydrates_g: Decimal
     exercise_kcal: Decimal
     exercise_count: int
-    # Food minus exercise. This is not a deficit: the baseline expenditure is
-    # unknown until the profile records height, weight, age and activity.
+    # Food minus exercise. On its own this is not a deficit, which is why the
+    # balance below is reported separately.
     net_kcal: Decimal
+    balance_status: str
+    resting_kcal: Decimal | None
+    living_kcal: Decimal | None
+    total_expenditure_kcal: Decimal | None
+    balance_kcal: Decimal | None

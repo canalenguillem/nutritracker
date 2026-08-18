@@ -6,7 +6,17 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 9 incluye, además de todo lo anterior:
+La Fase 10 incluye, además de todo lo anterior:
+
+- Balance calórico del día: comida frente a gasto total, con el gasto en reposo
+  estimado por Mifflin-St Jeor a partir de estatura, peso, edad y sexo.
+- El factor de actividad diaria excluye los entrenamientos a propósito, porque
+  esos se registran uno a uno y se suman aparte. Un factor de manual los
+  contaría dos veces.
+- Mientras falte estatura, peso o fecha de nacimiento, el panel dice que todavía
+  no puede decirlo en vez de llamar déficit a la comida menos el ejercicio.
+
+La Fase 9 aportó el peso y el perfil:
 
 - Perfil con estatura, peso objetivo, fecha de nacimiento, sexo para la
   estimación metabólica, nivel de actividad y objetivo principal.

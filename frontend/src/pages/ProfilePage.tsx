@@ -156,7 +156,7 @@ export const ProfilePage = () => {
 
             <div className="form-field">
               <label className="form-field__label" htmlFor="profile-activity">
-                Nivel de actividad
+                Actividad diaria, sin contar entrenamientos
               </label>
               <select
                 className="form-field__input"
@@ -186,8 +186,10 @@ export const ProfilePage = () => {
           </div>
 
           <p className="dashboard__disclaimer">
-            Estos datos solo se usan para estimar. Nada de lo que calculemos sustituye el consejo
-            de un médico o dietista-nutricionista.
+            La actividad diaria no incluye tus entrenamientos: esos los registras uno a uno y se
+            suman aparte, para no contarlos dos veces. Estos datos solo se usan para estimar, y
+            nada de lo que calculemos sustituye el consejo de un médico o
+            dietista-nutricionista.
           </p>
 
           <div className="add-meal__actions">

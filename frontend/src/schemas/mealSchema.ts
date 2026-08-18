@@ -58,6 +58,11 @@ export const dailySummaryResponseSchema = z
     exercise_kcal: z.string(),
     exercise_count: z.number().int(),
     net_kcal: z.string(),
+    balance_status: z.enum(["estimated", "needs_profile"]),
+    resting_kcal: z.string().nullable(),
+    living_kcal: z.string().nullable(),
+    total_expenditure_kcal: z.string().nullable(),
+    balance_kcal: z.string().nullable(),
   })
   .passthrough();
 

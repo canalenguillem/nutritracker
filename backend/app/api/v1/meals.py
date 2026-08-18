@@ -10,6 +10,7 @@ from app.api.deps import (
     ExerciseServiceDependency,
     FoodAnalysisServiceDependency,
     MealServiceDependency,
+    ProfileServiceDependency,
     SettingsDependency,
 )
 from app.core.errors import ApiError
@@ -27,6 +28,7 @@ from app.schemas.meals import (
     MealUpdateRequest,
 )
 from app.services.daily_logs import local_log_date
+from app.services.energy import energy_balance
 from app.services.food_analysis import (
     FoodAnalysisDisabledError,
     FoodAnalysisError,
@@ -74,12 +76,25 @@ async def read_daily_summary(
     user: CurrentUserDependency,
     service: MealServiceDependency,
     exercises: ExerciseServiceDependency,
+    profiles: ProfileServiceDependency,
     log_date: LogDateQuery = None,
 ) -> DailySummaryResponse:
     day = log_date if log_date is not None else local_log_date(utc_now(), user.timezone)
     summary = await service.daily_totals(user, day)
     performed = await exercises.list_exercises(user, day)
     burned = sum((exercise.counted_calories for exercise in performed), Decimal("0.00"))
+    profile = await profiles.get_profile(user)
+
+    balance = energy_balance(
+        consumed_kcal=summary.totals.kcal,
+        exercise_kcal=burned,
+        weight_kg=profile.current_weight_kg,
+        height_cm=profile.height_cm,
+        birth_date=profile.birth_date,
+        biological_sex=profile.biological_sex,
+        activity_level=profile.activity_level,
+        today=day,
+    )
 
     return DailySummaryResponse(
         log_date=summary.log_date,
@@ -91,6 +106,11 @@ async def read_daily_summary(
         exercise_kcal=burned,
         exercise_count=len(performed),
         net_kcal=summary.totals.kcal - burned,
+        balance_status=balance.status,
+        resting_kcal=balance.resting_kcal,
+        living_kcal=balance.living_kcal,
+        total_expenditure_kcal=balance.total_expenditure_kcal,
+        balance_kcal=balance.balance_kcal,
     )
 
 

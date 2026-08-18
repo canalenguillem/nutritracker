@@ -50,8 +50,13 @@ export interface DailySummary extends Macros {
   readonly mealCount: number;
   readonly exerciseKcal: number;
   readonly exerciseCount: number;
-  /** Food minus exercise. Not a deficit: the baseline expenditure is unknown. */
+  /** Food minus exercise. On its own not a deficit; see the balance. */
   readonly netKcal: number;
+  readonly balanceStatus: "estimated" | "needs_profile";
+  readonly restingKcal: number | null;
+  readonly livingKcal: number | null;
+  readonly totalExpenditureKcal: number | null;
+  readonly balanceKcal: number | null;
 }
 
 export interface EstimatedItem extends Macros {
