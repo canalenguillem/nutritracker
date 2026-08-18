@@ -2,17 +2,18 @@ from datetime import date
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
 
 from app.api.deps import (
     CurrentUserDependency,
     FoodAnalysisServiceDependency,
     MealServiceDependency,
+    SettingsDependency,
 )
+from app.core.errors import ApiError
 from app.models.base import utc_now
 from app.schemas.analysis import (
     ClarificationQuestionResponse,
-    DescribeMealRequest,
     EstimatedItemResponse,
     FoodEstimateResponse,
 )
@@ -27,7 +28,9 @@ from app.services.food_analysis import (
     FoodAnalysisDisabledError,
     FoodAnalysisError,
     FoodEstimate,
+    MealPhoto,
 )
+from app.services.image_validation import ImageTooLargeError, InvalidImageError, validate_photo
 from app.services.meals import (
     EmptyMealError,
     MealChanges,
@@ -84,13 +87,21 @@ async def read_daily_summary(
 
 @router.post("/describe", response_model=FoodEstimateResponse)
 async def describe_meal(
-    payload: DescribeMealRequest,
     user: CurrentUserDependency,
     analysis: FoodAnalysisServiceDependency,
+    settings: SettingsDependency,
+    description: Annotated[str, Form(min_length=1, max_length=600)],
+    photo: Annotated[UploadFile | None, File()] = None,
 ) -> FoodEstimateResponse:
-    """Estimate a meal from a written description. Nothing is stored."""
+    """Estimate a meal from a description, optionally with a picture of the label.
+
+    Nothing is stored: neither the estimate nor the picture, which is sent to
+    the provider to be read and then dropped.
+    """
+    meal_photo = await _read_photo(photo, settings.max_upload_mb)
+
     try:
-        estimate = await analysis.describe(user.id, payload.description, user.locale)
+        estimate = await analysis.describe(user.id, description, user.locale, meal_photo)
     except FoodAnalysisDisabledError as error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -173,6 +184,27 @@ async def delete_meal(
         await service.delete_meal(user, meal_id)
     except MealNotFoundError as error:
         raise _not_found() from error
+
+
+async def _read_photo(photo: UploadFile | None, max_upload_mb: int) -> MealPhoto | None:
+    if photo is None or not photo.filename:
+        return None
+
+    content = await photo.read()
+    try:
+        return validate_photo(content, max_upload_mb * 1024 * 1024)
+    except ImageTooLargeError as error:
+        raise ApiError(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            code="IMAGE_TOO_LARGE",
+            detail=f"The picture must be {max_upload_mb} MB or smaller.",
+        ) from error
+    except InvalidImageError as error:
+        raise ApiError(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="INVALID_IMAGE",
+            detail="The picture must be a JPEG, PNG or WebP image.",
+        ) from error
 
 
 def _to_estimate_response(estimate: FoodEstimate) -> FoodEstimateResponse:

@@ -49,7 +49,7 @@ MEAL = {
 
 @pytest.fixture
 async def application() -> AsyncIterator[FastAPI]:
-    settings = build_settings()
+    settings = build_settings(max_upload_mb=1)
     application = create_app(settings)
     engine = create_async_engine(
         "sqlite+aiosqlite://",
@@ -255,6 +255,8 @@ async def test_a_user_only_lists_their_own_meals(client: AsyncClient) -> None:
     assert response.json() == []
 
 
+PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 128
+
 COFFEE_ESTIMATE = FoodEstimate(
     summary="Café con nata",
     items=[
@@ -301,7 +303,7 @@ async def test_describing_a_meal_returns_an_estimate(
     use_analyzer(application, FakeFoodAnalyzer(estimate=COFFEE_ESTIMATE))
 
     response = await client.post(
-        "/api/v1/meals/describe", json={"description": "café con nata"}, headers=headers
+        "/api/v1/meals/describe", data={"description": "café con nata"}, headers=headers
     )
 
     assert response.status_code == 200, response.text
@@ -316,7 +318,7 @@ async def test_describing_a_meal_stores_nothing(client: AsyncClient, application
     use_analyzer(application, FakeFoodAnalyzer(estimate=COFFEE_ESTIMATE))
 
     await client.post(
-        "/api/v1/meals/describe", json={"description": "café con nata"}, headers=headers
+        "/api/v1/meals/describe", data={"description": "café con nata"}, headers=headers
     )
     meals = await client.get("/api/v1/meals", headers=headers)
 
@@ -327,7 +329,7 @@ async def test_describing_a_meal_needs_a_configured_provider(client: AsyncClient
     headers = await sign_up(client)
 
     response = await client.post(
-        "/api/v1/meals/describe", json={"description": "café con nata"}, headers=headers
+        "/api/v1/meals/describe", data={"description": "café con nata"}, headers=headers
     )
 
     assert response.status_code == 503
@@ -341,7 +343,7 @@ async def test_a_failing_provider_is_reported_as_an_analysis_error(
     use_analyzer(application, FakeFoodAnalyzer(error=FoodAnalysisError()))
 
     response = await client.post(
-        "/api/v1/meals/describe", json={"description": "café con nata"}, headers=headers
+        "/api/v1/meals/describe", data={"description": "café con nata"}, headers=headers
     )
 
     assert response.status_code == 502
@@ -362,10 +364,10 @@ async def test_repeating_a_description_does_not_reach_the_provider_again(
     use_analyzer(application, analyzer, FakeFoodEstimateCache())
 
     first = await client.post(
-        "/api/v1/meals/describe", json={"description": "Un café con nata"}, headers=headers
+        "/api/v1/meals/describe", data={"description": "Un café con nata"}, headers=headers
     )
     second = await client.post(
-        "/api/v1/meals/describe", json={"description": "un café con nata"}, headers=headers
+        "/api/v1/meals/describe", data={"description": "un café con nata"}, headers=headers
     )
 
     assert first.status_code == 200
@@ -374,3 +376,79 @@ async def test_repeating_a_description_does_not_reach_the_provider_again(
     assert first.json()["from_cache"] is False
     assert second.json()["from_cache"] is True
     assert second.json()["items"] == first.json()["items"]
+
+
+async def test_a_label_photo_reaches_the_estimator(
+    client: AsyncClient, application: FastAPI
+) -> None:
+    headers = await sign_up(client)
+    analyzer = FakeFoodAnalyzer(estimate=COFFEE_ESTIMATE)
+    use_analyzer(application, analyzer)
+
+    response = await client.post(
+        "/api/v1/meals/describe",
+        data={"description": "media tarrina de mascarpone"},
+        files={"photo": ("etiqueta.png", PNG_BYTES, "image/png")},
+        headers=headers,
+    )
+
+    assert response.status_code == 200, response.text
+    assert analyzer.photos[0] is not None
+    assert analyzer.photos[0].media_type == "image/png"
+
+
+async def test_the_same_words_with_a_photo_are_estimated_again(
+    client: AsyncClient, application: FastAPI
+) -> None:
+    headers = await sign_up(client)
+    analyzer = FakeFoodAnalyzer(estimate=COFFEE_ESTIMATE)
+    use_analyzer(application, analyzer, FakeFoodEstimateCache())
+
+    await client.post(
+        "/api/v1/meals/describe",
+        data={"description": "media tarrina de mascarpone"},
+        headers=headers,
+    )
+    with_photo = await client.post(
+        "/api/v1/meals/describe",
+        data={"description": "media tarrina de mascarpone"},
+        files={"photo": ("etiqueta.png", PNG_BYTES, "image/png")},
+        headers=headers,
+    )
+
+    # The picture is new information, so the remembered answer must not be used.
+    assert len(analyzer.calls) == 2
+    assert with_photo.json()["from_cache"] is False
+
+
+async def test_a_file_that_is_not_an_image_is_refused(
+    client: AsyncClient, application: FastAPI
+) -> None:
+    headers = await sign_up(client)
+    use_analyzer(application, FakeFoodAnalyzer(estimate=COFFEE_ESTIMATE))
+
+    response = await client.post(
+        "/api/v1/meals/describe",
+        data={"description": "media tarrina de mascarpone"},
+        files={"photo": ("notas.txt", b"esto no es una imagen", "image/png")},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "INVALID_IMAGE"
+
+
+async def test_a_photo_over_the_limit_is_refused(client: AsyncClient, application: FastAPI) -> None:
+    headers = await sign_up(client)
+    use_analyzer(application, FakeFoodAnalyzer(estimate=COFFEE_ESTIMATE))
+    oversized = PNG_BYTES + b"0" * (2 * 1024 * 1024)
+
+    response = await client.post(
+        "/api/v1/meals/describe",
+        data={"description": "media tarrina de mascarpone"},
+        files={"photo": ("etiqueta.png", oversized, "image/png")},
+        headers=headers,
+    )
+
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "IMAGE_TOO_LARGE"

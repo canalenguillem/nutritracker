@@ -6,7 +6,7 @@ from app.models.base import utc_now
 from app.models.enums import AuthProvider, UserRole, UserStatus
 from app.models.meal import DailyLog, Meal
 from app.models.user import AuthIdentity, RefreshToken, User
-from app.services.food_analysis import FoodEstimate
+from app.services.food_analysis import FoodEstimate, MealPhoto
 
 
 @dataclass
@@ -132,9 +132,13 @@ class FakeFoodAnalyzer:
     estimate: FoodEstimate | None = None
     error: Exception | None = None
     calls: list[tuple[str, str]] = field(default_factory=list)
+    photos: list[MealPhoto | None] = field(default_factory=list)
 
-    async def describe(self, description: str, language: str) -> FoodEstimate:
+    async def describe(
+        self, description: str, language: str, photo: MealPhoto | None = None
+    ) -> FoodEstimate:
         self.calls.append((description, language))
+        self.photos.append(photo)
         if self.error is not None:
             raise self.error
         if self.estimate is None:

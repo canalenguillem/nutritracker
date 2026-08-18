@@ -105,8 +105,20 @@ export const deleteMeal = async (mealId: string): Promise<void> => {
   await httpClient.delete(`/meals/${mealId}`);
 };
 
-export const describeMeal = async (description: string): Promise<FoodEstimate> => {
-  const response = await httpClient.post<unknown>("/meals/describe", { description });
+export const describeMeal = async ({
+  description,
+  photo,
+}: {
+  readonly description: string;
+  readonly photo?: File | null;
+}): Promise<FoodEstimate> => {
+  const form = new FormData();
+  form.append("description", description);
+  if (photo) {
+    form.append("photo", photo);
+  }
+
+  const response = await httpClient.post<unknown>("/meals/describe", form);
   const estimate = foodEstimateResponseSchema.parse(response.data);
 
   return {

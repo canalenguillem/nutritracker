@@ -1899,3 +1899,86 @@ select.form-field__input {
   letter-spacing: 0.04em;
   text-transform: none;
 }
+
+.describe__photo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 0.9rem;
+  margin-top: 0.35rem;
+}
+
+.describe__photo-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.describe__photo-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px dashed #a9c3b6;
+  border-radius: 0.75rem;
+  background: rgb(255 255 255 / 70%);
+  color: var(--color-green-dark);
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.describe__photo-pick:hover {
+  border-color: var(--color-green);
+}
+
+.describe__photo-input:focus-visible + .describe__photo-pick,
+.describe__photo-pick:focus-within {
+  outline: 3px solid rgb(29 88 72 / 25%);
+  outline-offset: 2px;
+}
+
+.describe__photo-pick svg {
+  width: 1.05rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.describe__photo-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  color: var(--color-ink-soft);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.describe__photo-name button {
+  border: none;
+  background: none;
+  color: var(--color-error);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+
+.describe__photo-hint {
+  color: var(--color-ink-soft);
+  font-size: 0.8rem;
+}
+
+.describe__notice {
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}

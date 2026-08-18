@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     openai_model: str = ""
     openai_prompt_version: str = "v1"
     openai_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
+    max_upload_mb: int = Field(default=10, ge=1, le=50)
 
     mariadb_host: str = "localhost"
     mariadb_port: int = Field(default=3306, ge=1, le=65535)

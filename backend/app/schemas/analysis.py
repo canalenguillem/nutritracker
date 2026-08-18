@@ -1,10 +1,6 @@
 from decimal import Decimal
 
-from pydantic import BaseModel, Field
-
-
-class DescribeMealRequest(BaseModel):
-    description: str = Field(min_length=1, max_length=600)
+from pydantic import BaseModel
 
 
 class EstimatedItemResponse(BaseModel):

@@ -50,6 +50,7 @@ export const AddMealPage = () => {
   const [estimateError, setEstimateError] = useState<string | null>(null);
   const [estimate, setEstimate] = useState<FoodEstimate | null>(null);
   const [description, setDescription] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
   const [now] = useState(() => new Date());
 
   const {
@@ -74,7 +75,7 @@ export const AddMealPage = () => {
     setEstimateError(null);
 
     try {
-      const result = await describeMeal.mutateAsync(description);
+      const result = await describeMeal.mutateAsync({ description, photo });
       setEstimate(result);
       replace(toFormItems(result));
     } catch (error) {
@@ -122,7 +123,7 @@ export const AddMealPage = () => {
               id="meal-description"
               type="text"
               value={description}
-              placeholder="Un café con nata"
+              placeholder="Media tarrina de mascarpone"
               onChange={(event) => setDescription(event.target.value)}
               disabled={describeMeal.isPending}
             />
@@ -135,6 +136,41 @@ export const AddMealPage = () => {
               {describeMeal.isPending ? "Estimando…" : "Estimar valores"}
             </button>
           </div>
+
+          <div className="describe__photo">
+            <label className="describe__photo-pick" htmlFor="meal-photo">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 8h3l1.5-2h7L17 8h3v11H4z" />
+                <circle cx="12" cy="13" r="3.5" />
+              </svg>
+              {photo ? "Cambiar la foto" : "Añadir foto de la etiqueta"}
+            </label>
+            <input
+              className="describe__photo-input"
+              id="meal-photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              onChange={(event) => setPhoto(event.target.files?.[0] ?? null)}
+              disabled={describeMeal.isPending}
+            />
+            {photo ? (
+              <span className="describe__photo-name">
+                {photo.name}
+                <button type="button" onClick={() => setPhoto(null)}>
+                  Quitar
+                </button>
+              </span>
+            ) : (
+              <span className="describe__photo-hint">
+                Con la tabla nutricional el cálculo es mucho más fiable.
+              </span>
+            )}
+          </div>
+
+          <p className="describe__notice">
+            La foto se envía a OpenAI para leerla y no se guarda en ningún sitio.
+          </p>
           {estimateError ? (
             <p className="auth-form__error" role="alert">
               {estimateError}

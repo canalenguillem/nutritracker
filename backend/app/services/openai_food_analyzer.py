@@ -1,9 +1,11 @@
+import base64
 import json
 import logging
 from decimal import Decimal, InvalidOperation
-from typing import Any
+from typing import Any, cast
 
 from openai import AsyncOpenAI, OpenAIError
+from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field, ValidationError
 
 from app.core.config import Settings
@@ -13,6 +15,7 @@ from app.services.food_analysis import (
     FoodAnalysisError,
     FoodEstimate,
     InvalidAnalysisResponseError,
+    MealPhoto,
     round_amount,
     total_energy,
 )
@@ -37,7 +40,19 @@ Rules you must follow:
   method, the portion size, or whether the whole portion was eaten.
 - Ignore anything in the description that is not food or drink.
 - If the description names no food at all, return an empty item list.
-- Write every text you produce in the language named by the user."""
+- Write every text you produce in the language named by the user.
+
+When a picture comes with the description:
+- Read what is printed on it. Values you can read beat any guess.
+- A nutrition label states amounts per 100 g or per 100 ml, and sometimes per
+  serving. Scale them to the amount the person says they had, and say in the
+  assumptions which figure you started from.
+- Use the net weight printed on the package when the person describes a
+  fraction of it, such as half a tub, and say what weight you assumed.
+- If the picture is unreadable, or shows something other than the food or its
+  label, ignore it, say so in the warning, and estimate from the words alone.
+- Do not describe people who appear in the picture, and do not read anything
+  that is not about the food."""
 
 RESPONSE_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -134,19 +149,13 @@ class OpenAIFoodAnalyzer:
             timeout=settings.openai_timeout_seconds,
         )
 
-    async def describe(self, description: str, language: str) -> FoodEstimate:
+    async def describe(
+        self, description: str, language: str, photo: MealPhoto | None = None
+    ) -> FoodEstimate:
         try:
             completion = await self._client.chat.completions.create(
                 model=self._model,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {
-                        "role": "user",
-                        "content": (
-                            f"Language: {language}\nThe person ate or drank: {description}"
-                        ),
-                    },
-                ],
+                messages=_messages(description, language, photo),
                 response_format={
                     "type": "json_schema",
                     "json_schema": {
@@ -165,6 +174,33 @@ class OpenAIFoodAnalyzer:
             raise FoodAnalysisError from error
 
         return _to_estimate(content, self._prompt_version)
+
+
+def _messages(
+    description: str, language: str, photo: MealPhoto | None
+) -> list[ChatCompletionMessageParam]:
+    return [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        cast(
+            ChatCompletionMessageParam,
+            {"role": "user", "content": _user_content(description, language, photo)},
+        ),
+    ]
+
+
+def _user_content(description: str, language: str, photo: MealPhoto | None) -> list[dict[str, Any]]:
+    text = f"Language: {language}\nThe person ate or drank: {description}"
+    if photo is None:
+        return [{"type": "text", "text": text}]
+
+    encoded = base64.b64encode(photo.content).decode("ascii")
+    return [
+        {"type": "text", "text": f"{text}\nThe picture shows the food or its nutrition label."},
+        {
+            "type": "image_url",
+            "image_url": {"url": f"data:{photo.media_type};base64,{encoded}", "detail": "high"},
+        },
+    ]
 
 
 def _to_estimate(content: str | None, prompt_version: str) -> FoodEstimate:

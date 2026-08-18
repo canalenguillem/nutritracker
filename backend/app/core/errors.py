@@ -12,6 +12,18 @@ from app.schemas.errors import ErrorDetail, ErrorResponse
 logger = logging.getLogger(__name__)
 
 
+class ApiError(HTTPException):
+    """An HTTPException that names its own error code.
+
+    Several failures share a status code but mean different things to the
+    client, so the code cannot always be derived from the status alone.
+    """
+
+    def __init__(self, status_code: int, code: str, detail: str) -> None:
+        super().__init__(status_code=status_code, detail=detail)
+        self.code = code
+
+
 def _request_id(request: Request) -> str:
     return str(getattr(request.state, "request_id", "unknown"))
 
@@ -62,10 +74,15 @@ async def http_error_handler(request: Request, exception: HTTPException) -> JSON
         status.HTTP_503_SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
     }
     message = exception.detail if isinstance(exception.detail, str) else "The request failed."
+    code = (
+        exception.code
+        if isinstance(exception, ApiError)
+        else code_by_status.get(exception.status_code, "HTTP_ERROR")
+    )
     return _error_response(
         request=request,
         status_code=exception.status_code,
-        code=code_by_status.get(exception.status_code, "HTTP_ERROR"),
+        code=code,
         message=message,
         headers=exception.headers,
     )
