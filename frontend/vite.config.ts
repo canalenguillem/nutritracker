@@ -11,6 +11,13 @@ const parsePort = (value: string | undefined, fallback: number): number => {
   return Number.isInteger(parsedValue) && parsedValue > 0 ? parsedValue : fallback;
 };
 
+/** Hosts the dev server answers to, beyond localhost and plain IP addresses. */
+const parseAllowedHosts = (value: string | undefined): string[] =>
+  (value ?? "")
+    .split(",")
+    .map((host) => host.trim())
+    .filter(Boolean);
+
 const escapeHtml = (value: string): string =>
   value.replace(
     /[&<>'"]/g,
@@ -40,6 +47,7 @@ export default defineConfig(({ mode }) => {
       host: "0.0.0.0",
       port: parsePort(environment.VITE_DEV_SERVER_PORT, DEFAULT_DEVELOPMENT_PORT),
       strictPort: true,
+      allowedHosts: parseAllowedHosts(environment.VITE_DEV_ALLOWED_HOSTS),
       proxy: {
         "/api": {
           target: environment.VITE_API_PROXY_TARGET || "http://backend:8000",
