@@ -11,7 +11,11 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
     const fieldId = useId();
     const hintId = `${fieldId}-hint`;
     const errorId = `${fieldId}-error`;
-    const describedBy = [hint ? hintId : null, error ? errorId : null].filter(Boolean).join(" ");
+    // The error replaces the hint so the same rule is never shown twice.
+    const visibleHint = error ? undefined : hint;
+    const describedBy = [visibleHint ? hintId : null, error ? errorId : null]
+      .filter(Boolean)
+      .join(" ");
 
     return (
       <div className="form-field">
@@ -26,9 +30,9 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy || undefined}
         />
-        {hint ? (
+        {visibleHint ? (
           <p className="form-field__hint" id={hintId}>
-            {hint}
+            {visibleHint}
           </p>
         ) : null}
         {error ? (

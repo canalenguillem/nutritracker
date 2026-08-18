@@ -133,7 +133,7 @@ svg {
 .site-header__nav {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.75rem;
   font-size: 0.86rem;
   font-weight: 650;
 }
@@ -151,7 +151,7 @@ svg {
 }
 
 .site-header__status-link {
-  display: inline-flex;
+  display: none;
   align-items: center;
   gap: 0.45rem;
   padding: 0.58rem 0.8rem;
@@ -937,8 +937,16 @@ svg {
     min-height: 5.15rem;
   }
 
+  .site-header__nav {
+    gap: 1.25rem;
+  }
+
   .site-header__nav > a:first-child {
     display: inline;
+  }
+
+  .site-header__status-link {
+    display: inline-flex;
   }
 
   .brand__name {
