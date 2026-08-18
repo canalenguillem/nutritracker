@@ -15,6 +15,7 @@ from app.repositories.meals import SQLAlchemyMealRepository
 from app.repositories.refresh_tokens import SQLAlchemyRefreshTokenRepository
 from app.repositories.user_profiles import SQLAlchemyUserProfileRepository
 from app.repositories.users import SQLAlchemyUserRepository
+from app.repositories.weights import SQLAlchemyWeightRepository
 from app.security.tokens import TokenValidationError, decode_access_token
 from app.services.auth import AuthService, RequestContext
 from app.services.exercises import ExerciseService
@@ -24,7 +25,9 @@ from app.services.google_oauth import GoogleOAuthService
 from app.services.meals import MealService
 from app.services.oauth_state import RedisOAuthStateStore
 from app.services.openai_food_analyzer import OpenAIFoodAnalyzer
+from app.services.profiles import ProfileService
 from app.services.users import UserNotFoundError, UserService
+from app.services.weights import WeightService
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -81,6 +84,23 @@ def get_exercise_service(session: SessionDependency) -> ExerciseService:
 
 
 ExerciseServiceDependency = Annotated[ExerciseService, Depends(get_exercise_service)]
+
+
+def get_profile_service(session: SessionDependency) -> ProfileService:
+    return ProfileService(SQLAlchemyUserProfileRepository(session))
+
+
+ProfileServiceDependency = Annotated[ProfileService, Depends(get_profile_service)]
+
+
+def get_weight_service(session: SessionDependency) -> WeightService:
+    return WeightService(
+        weights=SQLAlchemyWeightRepository(session),
+        profiles=SQLAlchemyUserProfileRepository(session),
+    )
+
+
+WeightServiceDependency = Annotated[WeightService, Depends(get_weight_service)]
 
 
 def get_food_analysis_service(
