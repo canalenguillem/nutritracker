@@ -6,7 +6,21 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 8 incluye, además de todo lo anterior:
+La Fase 9 incluye, además de todo lo anterior:
+
+- Perfil con estatura, peso objetivo, fecha de nacimiento, sexo para la
+  estimación metabólica, nivel de actividad y objetivo principal.
+- Registro de peso diario con una tendencia suavizada, que cierra cada día una
+  décima parte de la distancia hasta la lectura. La báscula recoge agua y comida
+  además de grasa, y la tendencia es lo que separa una cosa de la otra.
+- Gráfica con las lecturas, la tendencia y la línea del objetivo, y cambio a 7 y
+  30 días calculado sobre la tendencia, no sobre la última pesada.
+- IMC estimado a partir de la tendencia y la estatura, presentado como
+  estimación y sin decir nada sobre la composición corporal.
+- El último peso registrado alimenta la estimación de gasto del ejercicio, que
+  ya no necesita que se escriba el peso en su formulario.
+
+La Fase 8 aportó el ejercicio:
 
 - Registro de ejercicio con actividad, duración, intensidad, notas y hora.
 - El gasto se estima a partir de la actividad, la intensidad, el tiempo y el

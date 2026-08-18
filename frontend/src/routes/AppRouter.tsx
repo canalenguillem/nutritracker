@@ -9,6 +9,8 @@ import { AuthCallbackPage } from "../pages/AuthCallbackPage";
 import { DashboardPage } from "../pages/DashboardPage";
 import { HomePage } from "../pages/HomePage";
 import { LoginPage } from "../pages/LoginPage";
+import { ProfilePage } from "../pages/ProfilePage";
+import { WeightPage } from "../pages/WeightPage";
 import { GuestRoute } from "./GuestRoute";
 import { ProtectedRoute } from "./ProtectedRoute";
 
@@ -32,6 +34,8 @@ export const AppRouter = () => (
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="meals/new" element={<AddMealPage />} />
         <Route path="exercises/new" element={<AddExercisePage />} />
+        <Route path="weight" element={<WeightPage />} />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
     </Route>
 

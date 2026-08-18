@@ -1,12 +1,12 @@
 # Implementation status
 
 The project is implemented sequentially according to the phases requested by the
-product owner. Phase 8 is complete: exercise is recorded and counted against the
-day, with the expenditure estimated from the activity, the intensity, the time
-and body weight, and the person's own figure taking precedence. Running the food
-estimator against OpenAI requires a key in `.env`. The user profile, and with it
-the baseline expenditure that turns the daily net into a real balance, remains
-intentionally deferred.
+product owner. Phase 9 is complete: the profile holds height, target weight and
+the figures a metabolic estimate needs, and weight is tracked day by day with an
+exponentially smoothed trend, charted against the target. Running the food
+estimator against OpenAI requires a key in `.env`. Baseline expenditure, which
+would turn the daily net into a real balance, remains intentionally deferred
+even though the profile now carries what it needs.
 
 Run the development application with:
 
