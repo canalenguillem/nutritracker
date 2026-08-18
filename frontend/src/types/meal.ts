@@ -49,3 +49,26 @@ export interface DailySummary extends Macros {
   readonly logDate: string;
   readonly mealCount: number;
 }
+
+export interface EstimatedItem extends Macros {
+  readonly name: string;
+  readonly quantity: number;
+  readonly unit: string;
+  readonly confidence: number | null;
+  readonly assumptions: readonly string[];
+}
+
+export interface ClarificationQuestion {
+  readonly key: string;
+  readonly question: string;
+  readonly options: readonly string[];
+}
+
+export interface FoodEstimate {
+  readonly summary: string;
+  readonly items: readonly EstimatedItem[];
+  readonly totalKcal: number;
+  readonly questions: readonly ClarificationQuestion[];
+  readonly confidence: number | null;
+  readonly warning: string;
+}

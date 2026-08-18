@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { createMeal, deleteMeal, getDailySummary, getMeals } from "../../api/mealsApi";
+import {
+  createMeal,
+  deleteMeal,
+  describeMeal,
+  getDailySummary,
+  getMeals,
+} from "../../api/mealsApi";
 
 export const mealKeys = {
   summary: (day?: string) => ["meals", "summary", day ?? "today"] as const,
@@ -44,3 +50,5 @@ export const useDeleteMeal = () => {
     onSuccess: resetMealCache,
   });
 };
+
+export const useDescribeMeal = () => useMutation({ mutationFn: describeMeal });

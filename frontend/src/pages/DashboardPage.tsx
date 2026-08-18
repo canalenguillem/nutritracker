@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 import { MacroTotals } from "../components/MacroTotals";
 import { MealCard } from "../components/MealCard";
 import { PageLoader } from "../components/PageLoader";
-import { getAuthErrorMessage } from "../features/auth/authErrors";
 import { useAuth } from "../features/auth/useAuth";
 import { formatDay } from "../features/meals/mealLabels";
+import { getMealErrorMessage } from "../features/meals/mealErrors";
 import { useDailySummary, useDayMeals, useDeleteMeal } from "../features/meals/useMeals";
 
 export const DashboardPage = () => {
@@ -23,7 +23,7 @@ export const DashboardPage = () => {
       <section className="dashboard">
         <div className="container">
           <p className="auth-form__error" role="alert">
-            {getAuthErrorMessage(summaryQuery.error)}
+            {getMealErrorMessage(summaryQuery.error)}
           </p>
         </div>
       </section>
@@ -71,7 +71,7 @@ export const DashboardPage = () => {
           ) : null}
           {mealsQuery.isError ? (
             <p className="auth-form__error" role="alert">
-              {getAuthErrorMessage(mealsQuery.error)}
+              {getMealErrorMessage(mealsQuery.error)}
             </p>
           ) : null}
           {!mealsQuery.isPending && meals.length === 0 ? (

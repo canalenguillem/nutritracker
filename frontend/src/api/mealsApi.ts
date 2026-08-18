@@ -1,5 +1,6 @@
 import {
   dailySummaryResponseSchema,
+  foodEstimateResponseSchema,
   mealListResponseSchema,
   mealResponseSchema,
   parseAmount,
@@ -7,6 +8,7 @@ import {
 import type {
   DailySummary,
   DailySummaryResponse,
+  FoodEstimate,
   Meal,
   MealFormValues,
   MealItem,
@@ -101,4 +103,32 @@ export const createMeal = async (values: MealFormValues): Promise<Meal> => {
 
 export const deleteMeal = async (mealId: string): Promise<void> => {
   await httpClient.delete(`/meals/${mealId}`);
+};
+
+export const describeMeal = async (description: string): Promise<FoodEstimate> => {
+  const response = await httpClient.post<unknown>("/meals/describe", { description });
+  const estimate = foodEstimateResponseSchema.parse(response.data);
+
+  return {
+    summary: estimate.summary,
+    totalKcal: Number(estimate.total_kcal),
+    confidence: estimate.confidence === null ? null : Number(estimate.confidence),
+    warning: estimate.warning,
+    items: estimate.items.map((item) => ({
+      name: item.name,
+      quantity: Number(item.quantity),
+      unit: item.unit,
+      kcal: Number(item.kcal),
+      proteinG: Number(item.protein_g),
+      fatG: Number(item.fat_g),
+      carbohydratesG: Number(item.carbohydrates_g),
+      confidence: item.confidence === null ? null : Number(item.confidence),
+      assumptions: item.assumptions,
+    })),
+    questions: estimate.questions.map((question) => ({
+      key: question.key,
+      question: question.question,
+      options: question.options,
+    })),
+  };
 };

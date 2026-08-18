@@ -3,12 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 
+import { EstimatePanel } from "../components/EstimatePanel";
 import { FormField } from "../components/FormField";
-import { getAuthErrorMessage } from "../features/auth/authErrors";
 import { mealTypeOptions } from "../features/meals/mealLabels";
-import { useCreateMeal } from "../features/meals/useMeals";
+import { getMealErrorMessage } from "../features/meals/mealErrors";
+import { useCreateMeal, useDescribeMeal } from "../features/meals/useMeals";
 import { mealFormSchema } from "../schemas/mealSchema";
-import type { MealFormValues, MealItemFormValues } from "../types/meal";
+import type { FoodEstimate, MealFormValues, MealItemFormValues } from "../types/meal";
 
 const EMPTY_ITEM: MealItemFormValues = {
   name: "",
@@ -20,6 +21,20 @@ const EMPTY_ITEM: MealItemFormValues = {
   carbohydrates_g: "",
 };
 
+/** The form accepts the comma, so write the estimate the way it reads in Spanish. */
+const toFieldValue = (value: number): string => String(value).replace(".", ",");
+
+const toFormItems = (estimate: FoodEstimate): MealItemFormValues[] =>
+  estimate.items.map((item) => ({
+    name: item.name,
+    quantity: toFieldValue(item.quantity),
+    unit: item.unit,
+    kcal: toFieldValue(item.kcal),
+    protein_g: toFieldValue(item.proteinG),
+    fat_g: toFieldValue(item.fatG),
+    carbohydrates_g: toFieldValue(item.carbohydratesG),
+  }));
+
 const pad = (value: number): string => String(value).padStart(2, "0");
 
 const todayValue = (now: Date): string =>
@@ -30,7 +45,11 @@ const timeValue = (now: Date): string => `${pad(now.getHours())}:${pad(now.getMi
 export const AddMealPage = () => {
   const navigate = useNavigate();
   const createMeal = useCreateMeal();
+  const describeMeal = useDescribeMeal();
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [estimateError, setEstimateError] = useState<string | null>(null);
+  const [estimate, setEstimate] = useState<FoodEstimate | null>(null);
+  const [description, setDescription] = useState("");
   const [now] = useState(() => new Date());
 
   const {
@@ -49,7 +68,20 @@ export const AddMealPage = () => {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ control, name: "items" });
+  const { fields, append, remove, replace } = useFieldArray({ control, name: "items" });
+
+  const onEstimate = async () => {
+    setEstimateError(null);
+
+    try {
+      const result = await describeMeal.mutateAsync(description);
+      setEstimate(result);
+      replace(toFormItems(result));
+    } catch (error) {
+      setEstimate(null);
+      setEstimateError(getMealErrorMessage(error));
+    }
+  };
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmissionError(null);
@@ -58,7 +90,7 @@ export const AddMealPage = () => {
       await createMeal.mutateAsync(values);
       navigate("/dashboard", { replace: true });
     } catch (error) {
-      setSubmissionError(getAuthErrorMessage(error));
+      setSubmissionError(getMealErrorMessage(error));
     }
   });
 
@@ -76,6 +108,41 @@ export const AddMealPage = () => {
             lo que introduzcas.
           </p>
         </div>
+
+        <section className="describe" aria-label="Describir la comida">
+          <label className="form-field__label" htmlFor="meal-description">
+            ¿No sabes los valores? Describe lo que has comido
+          </label>
+          <p className="describe__hint">
+            Por ejemplo: «un café con nata» o «dos tostadas con aceite y tomate».
+          </p>
+          <div className="describe__row">
+            <input
+              className="form-field__input"
+              id="meal-description"
+              type="text"
+              value={description}
+              placeholder="Un café con nata"
+              onChange={(event) => setDescription(event.target.value)}
+              disabled={describeMeal.isPending}
+            />
+            <button
+              className="button button--secondary"
+              type="button"
+              onClick={() => void onEstimate()}
+              disabled={describeMeal.isPending || description.trim().length === 0}
+            >
+              {describeMeal.isPending ? "Estimando…" : "Estimar valores"}
+            </button>
+          </div>
+          {estimateError ? (
+            <p className="auth-form__error" role="alert">
+              {estimateError}
+            </p>
+          ) : null}
+        </section>
+
+        {estimate ? <EstimatePanel estimate={estimate} /> : null}
 
         <form className="add-meal__form" onSubmit={(event) => void onSubmit(event)} noValidate>
           {submissionError ? (

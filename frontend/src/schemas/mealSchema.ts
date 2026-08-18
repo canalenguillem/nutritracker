@@ -91,3 +91,36 @@ export const mealFormSchema = z.object({
   notes: z.string().trim().max(2000, "La nota es demasiado larga."),
   items: z.array(mealItemFormSchema).min(1, "Añade al menos un alimento."),
 });
+
+export const estimatedItemResponseSchema = z
+  .object({
+    name: z.string(),
+    quantity: z.string(),
+    unit: z.string(),
+    kcal: z.string(),
+    protein_g: z.string(),
+    fat_g: z.string(),
+    carbohydrates_g: z.string(),
+    confidence: z.string().nullable(),
+    assumptions: z.array(z.string()),
+  })
+  .passthrough();
+
+export const clarificationQuestionResponseSchema = z
+  .object({
+    key: z.string(),
+    question: z.string(),
+    options: z.array(z.string()),
+  })
+  .passthrough();
+
+export const foodEstimateResponseSchema = z
+  .object({
+    summary: z.string(),
+    items: z.array(estimatedItemResponseSchema),
+    total_kcal: z.string(),
+    questions: z.array(clarificationQuestionResponseSchema),
+    confidence: z.string().nullable(),
+    warning: z.string(),
+  })
+  .passthrough();
