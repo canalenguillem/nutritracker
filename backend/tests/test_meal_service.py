@@ -265,3 +265,64 @@ async def test_daily_totals_add_up_every_meal_of_the_day(service: MealService) -
     assert summary.meal_count == 2
     assert summary.totals.kcal == Decimal("295.00")
     assert summary.totals.protein_g == Decimal("33.70")
+
+
+async def test_recent_meals_keep_only_the_latest_of_each_dish(service: MealService) -> None:
+    user = build_user()
+    for day in (17, 18):
+        await service.create_meal(
+            user,
+            NewMeal(
+                meal_type=MealType.SNACK,
+                eaten_at=datetime(2026, 8, day, 18, 0),
+                items=[build_item(name="Mascarpone"), build_item(name="Arándanos")],
+            ),
+        )
+    await service.create_meal(
+        user,
+        NewMeal(
+            meal_type=MealType.LUNCH,
+            eaten_at=datetime(2026, 8, 18, 14, 0),
+            items=[build_item(name="Arroz")],
+        ),
+    )
+
+    recent = await service.recent_meals(user)
+
+    assert len(recent) == 2
+    assert [item.name for item in recent[0].items] == ["Mascarpone", "Arándanos"]
+
+
+async def test_recent_meals_can_be_searched(service: MealService) -> None:
+    user = build_user()
+    await service.create_meal(
+        user,
+        NewMeal(
+            meal_type=MealType.SNACK,
+            eaten_at=datetime(2026, 8, 18, 18, 0),
+            items=[build_item(name="Mascarpone"), build_item(name="Arándanos")],
+        ),
+    )
+    await service.create_meal(
+        user,
+        NewMeal(
+            meal_type=MealType.LUNCH,
+            eaten_at=datetime(2026, 8, 18, 14, 0),
+            items=[build_item(name="Arroz")],
+        ),
+    )
+
+    recent = await service.recent_meals(user, "mascarpone")
+
+    assert len(recent) == 1
+    assert [item.name for item in recent[0].items] == ["Mascarpone", "Arándanos"]
+
+
+async def test_another_account_does_not_appear_among_recent_meals(service: MealService) -> None:
+    owner = build_user()
+    await service.create_meal(
+        owner,
+        NewMeal(meal_type=MealType.LUNCH, eaten_at=LUNCH_TIME, items=[build_item()]),
+    )
+
+    assert await service.recent_meals(build_user()) == []

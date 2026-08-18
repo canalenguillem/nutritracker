@@ -6,11 +6,13 @@ import {
   describeMeal,
   getDailySummary,
   getMeals,
+  getRecentMeals,
 } from "../../api/mealsApi";
 
 export const mealKeys = {
   summary: (day?: string) => ["meals", "summary", day ?? "today"] as const,
   day: (day: string) => ["meals", "day", day] as const,
+  recent: (query: string) => ["meals", "recent", query] as const,
 };
 
 /** Without a date the API answers for today in the account's own timezone. */
@@ -52,3 +54,10 @@ export const useDeleteMeal = () => {
 };
 
 export const useDescribeMeal = () => useMutation({ mutationFn: describeMeal });
+
+export const useRecentMeals = (query: string) =>
+  useQuery({
+    queryKey: mealKeys.recent(query.trim()),
+    queryFn: () => getRecentMeals(query),
+    staleTime: 60_000,
+  });

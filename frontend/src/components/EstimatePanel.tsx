@@ -28,8 +28,9 @@ export const EstimatePanel = ({ estimate }: EstimatePanelProps) => (
       {estimate.fromCache
         ? "Ya habías descrito esta comida, así que reutilizamos aquella estimación sin volver a consultar a la IA. "
         : ""}
-      Hemos rellenado el formulario con estos valores. Corrige lo que no encaje antes de
-      guardar: nada se guarda hasta que lo confirmes.
+      Hemos añadido estos alimentos al formulario. Puedes seguir describiendo más cosas y se
+      irán sumando. Corrige lo que no encaje antes de guardar: nada se guarda hasta que lo
+      confirmes.
       {formatConfidence(estimate.confidence)
         ? ` Confianza general: ${formatConfidence(estimate.confidence)}.`
         : ""}

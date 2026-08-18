@@ -5,6 +5,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 
 import { EstimatePanel } from "../components/EstimatePanel";
 import { FormField } from "../components/FormField";
+import { RecentMeals } from "../components/RecentMeals";
 import { mealTypeOptions } from "../features/meals/mealLabels";
 import { getMealErrorMessage } from "../features/meals/mealErrors";
 import {
@@ -18,7 +19,7 @@ import {
 import { formatFileSize, preparePhoto } from "../features/meals/photoPreparation";
 import { useCreateMeal, useDescribeMeal } from "../features/meals/useMeals";
 import { mealFormSchema } from "../schemas/mealSchema";
-import type { FoodEstimate, MealFormValues, MealItemFormValues } from "../types/meal";
+import type { FoodEstimate, Meal, MealFormValues, MealItemFormValues } from "../types/meal";
 
 const EMPTY_ITEM: MealItemFormValues = {
   name: "",
@@ -57,7 +58,7 @@ export const AddMealPage = () => {
   const describeMeal = useDescribeMeal();
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [estimateError, setEstimateError] = useState<string | null>(null);
-  const [estimate, setEstimate] = useState<FoodEstimate | null>(null);
+  const [estimates, setEstimates] = useState<FoodEstimate[]>([]);
   const [description, setDescription] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -89,6 +90,14 @@ export const AddMealPage = () => {
   });
 
   const { fields, append, remove, replace } = useFieldArray({ control, name: "items" });
+
+  /** Add to what is already there, dropping the blank row the form starts with. */
+  const addItems = (incoming: MealItemFormValues[]) => {
+    const filled = getValues("items").filter(
+      (item) => item.name.trim().length > 0 || item.kcal.trim().length > 0,
+    );
+    replace([...filled, ...incoming]);
+  };
 
   // Pick the draft back up after the browser rebuilt the page.
   useEffect(() => {
@@ -159,6 +168,7 @@ export const AddMealPage = () => {
     clearDraft();
     setWasRestored(false);
     setDescription("");
+    setEstimates([]);
     clearPhoto();
     reset({
       mealType: "lunch",
@@ -185,12 +195,28 @@ export const AddMealPage = () => {
 
     try {
       const result = await describeMeal.mutateAsync({ description, photo });
-      setEstimate(result);
-      replace(toFormItems(result));
+      setEstimates((current) => [...current, result]);
+      addItems(toFormItems(result));
+      // Clear the box so the next food can be described straight away.
+      setDescription("");
+      clearPhoto();
     } catch (error) {
-      setEstimate(null);
       setEstimateError(getMealErrorMessage(error));
     }
+  };
+
+  const onPickRecent = (meal: Meal) => {
+    addItems(
+      meal.items.map((item) => ({
+        name: item.name,
+        quantity: toFieldValue(item.quantity),
+        unit: item.unit,
+        kcal: toFieldValue(item.kcal),
+        protein_g: toFieldValue(item.proteinG),
+        fat_g: toFieldValue(item.fatG),
+        carbohydrates_g: toFieldValue(item.carbohydratesG),
+      })),
+    );
   };
 
   const onSubmit = handleSubmit(async (values) => {
@@ -332,7 +358,11 @@ export const AddMealPage = () => {
           ) : null}
         </section>
 
-        {estimate ? <EstimatePanel estimate={estimate} /> : null}
+        {estimates.map((entry, index) => (
+          <EstimatePanel key={`${entry.summary}-${index}`} estimate={entry} />
+        ))}
+
+        <RecentMeals onPick={onPickRecent} disabled={describeMeal.isPending} />
 
         <form className="add-meal__form" onSubmit={(event) => void onSubmit(event)} noValidate>
           {submissionError ? (

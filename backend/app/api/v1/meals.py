@@ -85,6 +85,18 @@ async def read_daily_summary(
     )
 
 
+@router.get("/recent", response_model=list[MealResponse])
+async def list_recent_meals(
+    user: CurrentUserDependency,
+    service: MealServiceDependency,
+    query: Annotated[str | None, Query(max_length=120)] = None,
+    limit: Annotated[int, Query(ge=1, le=25)] = 10,
+) -> list[MealResponse]:
+    """The meals worth repeating, so a usual dish need not be typed again."""
+    meals = await service.recent_meals(user, query, limit)
+    return [MealResponse.model_validate(meal) for meal in meals]
+
+
 @router.post("/describe", response_model=FoodEstimateResponse)
 async def describe_meal(
     user: CurrentUserDependency,

@@ -118,6 +118,20 @@ class FakeMealRepository:
             matches = [meal for meal in matches if meal.daily_log_id in log_ids]
         return sorted(matches, key=lambda meal: meal.eaten_at, reverse=True)
 
+    async def list_recent_for_user(
+        self, user_id: UUID, query: str | None, limit: int
+    ) -> list[Meal]:
+        matches = [meal for meal in self.meals if meal.user_id == user_id]
+        if query:
+            needle = query.lower()
+            matches = [
+                meal
+                for meal in matches
+                if any(needle in item.name.lower() for item in meal.items)
+                or needle in (meal.notes or "").lower()
+            ]
+        return sorted(matches, key=lambda meal: meal.eaten_at, reverse=True)[:limit]
+
     async def remove(self, meal: Meal) -> None:
         self.meals.remove(meal)
 

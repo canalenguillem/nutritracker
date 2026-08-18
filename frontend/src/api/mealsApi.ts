@@ -145,3 +145,11 @@ export const describeMeal = async ({
     })),
   };
 };
+
+export const getRecentMeals = async (query: string): Promise<Meal[]> => {
+  const response = await httpClient.get<unknown>("/meals/recent", {
+    params: query.trim() ? { query: query.trim() } : undefined,
+  });
+
+  return mealListResponseSchema.parse(response.data).map(toMeal);
+};

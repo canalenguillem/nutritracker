@@ -452,3 +452,79 @@ async def test_a_photo_over_the_limit_is_refused(client: AsyncClient, applicatio
 
     assert response.status_code == 413
     assert response.json()["error"]["code"] == "IMAGE_TOO_LARGE"
+
+
+async def test_recent_meals_offer_the_usual_dish(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    dessert = {
+        "meal_type": "snack",
+        "eaten_at": "2026-08-18T18:00:00",
+        "items": [
+            {
+                "name": "Mascarpone",
+                "quantity": "125.00",
+                "unit": "g",
+                "kcal": "437.50",
+                "protein_g": "5.00",
+                "fat_g": "45.00",
+                "carbohydrates_g": "5.00",
+            },
+            {
+                "name": "Arándanos",
+                "quantity": "80.00",
+                "unit": "g",
+                "kcal": "46.00",
+                "protein_g": "0.60",
+                "fat_g": "0.30",
+                "carbohydrates_g": "9.60",
+            },
+        ],
+    }
+    await create_meal(client, headers, **dessert)
+    await create_meal(client, headers, **{**dessert, "eaten_at": "2026-08-19T18:00:00"})
+    await create_meal(client, headers)
+
+    response = await client.get("/api/v1/meals/recent", headers=headers)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    # The dessert was eaten twice but is offered once.
+    assert len(body) == 2
+    assert [item["name"] for item in body[0]["items"]] == ["Mascarpone", "Arándanos"]
+
+
+async def test_recent_meals_can_be_searched_by_food(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    await create_meal(
+        client,
+        headers,
+        items=[
+            {
+                "name": "Mascarpone",
+                "quantity": "125.00",
+                "unit": "g",
+                "kcal": "437.50",
+                "protein_g": "5.00",
+                "fat_g": "45.00",
+                "carbohydrates_g": "5.00",
+            }
+        ],
+    )
+    await create_meal(client, headers)
+
+    response = await client.get("/api/v1/meals/recent", params={"query": "mascar"}, headers=headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["items"][0]["name"] == "Mascarpone"
+
+
+async def test_recent_meals_are_private(client: AsyncClient) -> None:
+    owner_headers = await sign_up(client, "owner@example.com")
+    await create_meal(client, owner_headers)
+    intruder_headers = await sign_up(client, "intruder@example.com")
+
+    response = await client.get("/api/v1/meals/recent", headers=intruder_headers)
+
+    assert response.json() == []

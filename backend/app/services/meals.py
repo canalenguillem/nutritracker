@@ -120,6 +120,29 @@ class MealService:
     async def list_meals(self, user: User, log_date: date | None = None) -> list[Meal]:
         return await self._meals.list_for_user(user.id, log_date)
 
+    async def recent_meals(
+        self, user: User, query: str | None = None, limit: int = 10
+    ) -> list[Meal]:
+        """The meals worth repeating, most recent first.
+
+        The same dish eaten many times would otherwise fill the list, so only
+        the latest of each combination of foods is kept.
+        """
+        candidates = await self._meals.list_recent_for_user(user.id, query, limit * 6)
+
+        seen: set[tuple[str, ...]] = set()
+        distinct: list[Meal] = []
+        for meal in candidates:
+            signature = tuple(sorted(item.name.strip().lower() for item in meal.items))
+            if not signature or signature in seen:
+                continue
+            seen.add(signature)
+            distinct.append(meal)
+            if len(distinct) == limit:
+                break
+
+        return distinct
+
     async def get_meal(self, user: User, meal_id: UUID) -> Meal:
         meal = await self._meals.get_for_user(user.id, meal_id)
         if meal is None:
