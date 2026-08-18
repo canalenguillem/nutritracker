@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Mapping
 
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
@@ -9,6 +10,7 @@ from starlette.exceptions import HTTPException
 from app.schemas.errors import ErrorDetail, ErrorResponse
 
 logger = logging.getLogger(__name__)
+
 
 def _request_id(request: Request) -> str:
     return str(getattr(request.state, "request_id", "unknown"))
@@ -21,6 +23,7 @@ def _error_response(
     code: str,
     message: str,
     details: object | None = None,
+    headers: Mapping[str, str] | None = None,
 ) -> JSONResponse:
     response = ErrorResponse(
         error=ErrorDetail(
@@ -30,7 +33,9 @@ def _error_response(
             request_id=_request_id(request),
         )
     )
-    return JSONResponse(status_code=status_code, content=jsonable_encoder(response))
+    return JSONResponse(
+        status_code=status_code, content=jsonable_encoder(response), headers=headers
+    )
 
 
 async def validation_error_handler(
@@ -47,9 +52,12 @@ async def validation_error_handler(
 
 async def http_error_handler(request: Request, exception: HTTPException) -> JSONResponse:
     code_by_status = {
+        status.HTTP_401_UNAUTHORIZED: "UNAUTHENTICATED",
         status.HTTP_403_FORBIDDEN: "FORBIDDEN",
         status.HTTP_404_NOT_FOUND: "RESOURCE_NOT_FOUND",
+        status.HTTP_409_CONFLICT: "CONFLICT",
         status.HTTP_429_TOO_MANY_REQUESTS: "RATE_LIMITED",
+        status.HTTP_503_SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
     }
     message = exception.detail if isinstance(exception.detail, str) else "The request failed."
     return _error_response(
@@ -57,6 +65,7 @@ async def http_error_handler(request: Request, exception: HTTPException) -> JSON
         status_code=exception.status_code,
         code=code_by_status.get(exception.status_code, "HTTP_ERROR"),
         message=message,
+        headers=exception.headers,
     )
 
 

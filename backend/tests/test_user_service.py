@@ -1,4 +1,3 @@
-from dataclasses import dataclass, field
 from uuid import UUID, uuid4
 
 import pytest
@@ -6,21 +5,7 @@ import pytest
 from app.models.enums import UserRole
 from app.models.user import User
 from app.services.users import NewUser, UserAlreadyExistsError, UserNotFoundError, UserService
-
-
-@dataclass
-class FakeUserRepository:
-    users: list[User] = field(default_factory=list)
-
-    async def add(self, user: User) -> User:
-        self.users.append(user)
-        return user
-
-    async def get_by_email(self, email: str) -> User | None:
-        return next((user for user in self.users if user.email == email), None)
-
-    async def get_by_id(self, user_id: UUID) -> User | None:
-        return next((user for user in self.users if user.id == user_id), None)
+from fakes import FakeUserRepository
 
 
 async def test_create_user_normalizes_email_and_assigns_default_role() -> None:

@@ -48,7 +48,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     application.state.health_service = health_service
+    application.state.redis_client = redis_client
     application.state.session_factory = session_factory
+    application.state.settings = application_settings
 
     application.add_middleware(
         CORSMiddleware,

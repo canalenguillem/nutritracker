@@ -44,9 +44,7 @@ class HealthService:
             services=services,
         )
 
-    async def _check_repository(
-        self, repository: HealthRepository
-    ) -> tuple[str, HealthStatus]:
+    async def _check_repository(self, repository: HealthRepository) -> tuple[str, HealthStatus]:
         started_at = perf_counter()
         dependency_status = HealthStatus.HEALTHY
         try:

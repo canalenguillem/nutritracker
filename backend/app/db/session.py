@@ -22,4 +22,10 @@ def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSessi
 async def get_db_session(request: Request) -> AsyncIterator[AsyncSession]:
     session_factory = request.app.state.session_factory
     async with session_factory() as session:
-        yield session
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        else:
+            await session.commit()
