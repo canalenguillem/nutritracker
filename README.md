@@ -14,6 +14,9 @@ La Fase 6 incluye, además de todo lo anterior:
   guardada, con vista previa antes de enviarla.
 - La foto se reduce en el navegador antes de subirla, de modo que una
   fotografía de móvil no choque con el límite de subida.
+- Lo que se está escribiendo se conserva fuera de la página durante dos horas,
+  porque el navegador del móvil suele descartarla mientras se usa la cámara.
+  Se borra al guardar la comida y al cerrar sesión.
 - La foto no se guarda: se envía al proveedor para leerla y se descarta.
 - Se aceptan JPEG, PNG y WebP hasta `MAX_UPLOAD_MB`, comprobando el contenido
   del archivo y no su nombre ni el tipo declarado.
