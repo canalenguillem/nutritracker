@@ -10,7 +10,9 @@ from app.repositories.daily_logs import DailyLogRepository
 from app.repositories.exercises import ExerciseRepository
 from app.repositories.user_profiles import UserProfileRepository
 from app.services.daily_logs import naive_utc, resolve_daily_log
-from app.services.exercise_calories import estimate_calories
+from app.services.exercise_calories import ActivityMet, estimate_calories, resolve_met
+from app.services.met_cache import RedisMetCache
+from app.services.met_lookup import MetLookup
 
 
 class ExerciseNotFoundError(Exception):
@@ -46,10 +48,14 @@ class ExerciseService:
         exercises: ExerciseRepository,
         daily_logs: DailyLogRepository,
         profiles: UserProfileRepository,
+        met_lookup: MetLookup | None = None,
+        met_cache: RedisMetCache | None = None,
     ) -> None:
         self._exercises = exercises
         self._daily_logs = daily_logs
         self._profiles = profiles
+        self._met_lookup = met_lookup
+        self._met_cache = met_cache
 
     async def create_exercise(self, user: User, data: NewExercise) -> Exercise:
         performed_at = naive_utc(data.performed_at)
@@ -63,7 +69,11 @@ class ExerciseService:
             duration_minutes=data.duration_minutes,
             intensity=data.intensity,
             estimated_calories=estimate_calories(
-                data.activity_name, data.intensity, data.duration_minutes, weight_kg
+                data.activity_name,
+                data.intensity,
+                data.duration_minutes,
+                weight_kg,
+                met=(await self._met_for(user, data.activity_name)).met,
             ),
             confirmed_calories=data.confirmed_calories,
             source=ExerciseSource.MANUAL,
@@ -111,7 +121,11 @@ class ExerciseService:
         ):
             weight_kg = await self._resolve_weight(user, None)
             exercise.estimated_calories = estimate_calories(
-                exercise.activity_name, exercise.intensity, exercise.duration_minutes, weight_kg
+                exercise.activity_name,
+                exercise.intensity,
+                exercise.duration_minutes,
+                weight_kg,
+                met=(await self._met_for(user, exercise.activity_name)).met,
             )
 
         return exercise
@@ -123,6 +137,11 @@ class ExerciseService:
     async def burned_calories(self, user: User, log_date: date) -> Decimal:
         exercises = await self._exercises.list_for_user(user.id, log_date)
         return sum((exercise.counted_calories for exercise in exercises), Decimal("0.00"))
+
+    async def _met_for(self, user: User, activity_name: str) -> ActivityMet:
+        return await resolve_met(
+            user.id, activity_name, lookup=self._met_lookup, cache=self._met_cache
+        )
 
     async def _resolve_weight(self, user: User, given: Decimal | None) -> Decimal | None:
         """Use the weight just given, remembering it, or the one already known."""

@@ -7,6 +7,8 @@ import { FormField } from "../components/FormField";
 import { intensityOptions } from "../features/exercises/exerciseLabels";
 import { useCreateExercise } from "../features/exercises/useExercises";
 import { getMealErrorMessage } from "../features/meals/mealErrors";
+import { useProfile } from "../features/weight/useWeight";
+import { formatKilos } from "../features/weight/weightLabels";
 import { exerciseFormSchema } from "../schemas/exerciseSchema";
 import type { ExerciseFormValues } from "../types/exercise";
 
@@ -20,6 +22,8 @@ const timeValue = (now: Date): string => `${pad(now.getHours())}:${pad(now.getMi
 export const AddExercisePage = () => {
   const navigate = useNavigate();
   const createExercise = useCreateExercise();
+  const profile = useProfile();
+  const knownWeightKg = profile.data?.currentWeightKg ?? null;
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [now] = useState(() => new Date());
 
@@ -129,14 +133,16 @@ export const AddExercisePage = () => {
               {...register("confirmedCalories")}
             />
 
-            <FormField
-              label="Tu peso en kg (opcional)"
-              type="text"
-              inputMode="decimal"
-              hint="Sin el peso no podemos estimar el gasto. Se recuerda para la próxima."
-              error={errors.weightKg?.message}
-              {...register("weightKg")}
-            />
+            {knownWeightKg === null ? (
+              <FormField
+                label="Tu peso en kg"
+                type="text"
+                inputMode="decimal"
+                hint="Sin el peso no podemos estimar el gasto. Se guarda en tu perfil."
+                error={errors.weightKg?.message}
+                {...register("weightKg")}
+              />
+            ) : null}
           </div>
 
           <div className="form-field">
@@ -160,6 +166,9 @@ export const AddExercisePage = () => {
           <p className="dashboard__disclaimer">
             El gasto es una estimación a partir de la actividad, la intensidad, el tiempo y tu
             peso. No sustituye una medición.
+            {knownWeightKg !== null
+              ? ` Usamos los ${formatKilos(knownWeightKg)} de tu perfil.`
+              : ""}
           </p>
 
           <div className="add-meal__actions">

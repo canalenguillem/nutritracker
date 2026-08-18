@@ -1,10 +1,17 @@
+import re
 import unicodedata
+from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
+from typing import Literal
+from uuid import UUID
 
 from app.models.enums import ExerciseIntensity
+from app.services.met_cache import RedisMetCache
+from app.services.met_lookup import MetLookup
 
 TWO_PLACES = Decimal("0.01")
 MINUTES_PER_HOUR = Decimal("60")
+WHITESPACE = re.compile(r"\s+")
 
 # Metabolic equivalents for the activities people record most often. A value is
 # an average for the activity, which the intensity then adjusts.
@@ -23,6 +30,15 @@ ACTIVITY_METS: tuple[tuple[tuple[str, ...], Decimal], ...] = (
 
 GENERIC_MET = Decimal("6.0")
 
+MetSource = Literal["table", "remembered", "provider", "generic"]
+
+
+@dataclass(frozen=True)
+class ActivityMet:
+    met: Decimal
+    source: MetSource
+
+
 INTENSITY_FACTORS: dict[ExerciseIntensity, Decimal] = {
     ExerciseIntensity.LOW: Decimal("0.80"),
     ExerciseIntensity.MODERATE: Decimal("1.00"),
@@ -32,17 +48,60 @@ INTENSITY_FACTORS: dict[ExerciseIntensity, Decimal] = {
 
 
 def _fold(value: str) -> str:
-    """Lowercase and drop the accents, so natación matches natacion."""
+    """Lowercase, drop the accents and tidy the spacing.
+
+    So natación matches natacion, and a stray double space does not make the
+    same activity look like a new one.
+    """
     decomposed = unicodedata.normalize("NFD", value.lower())
-    return "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
+    without_accents = "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
+    return WHITESPACE.sub(" ", without_accents).strip()
 
 
 def metabolic_equivalent(activity_name: str) -> Decimal:
+    return table_met(activity_name) or GENERIC_MET
+
+
+def table_met(activity_name: str) -> Decimal | None:
+    """The published value for an activity the table knows, or nothing."""
     folded = _fold(activity_name)
     for keywords, met in ACTIVITY_METS:
         if any(keyword in folded for keyword in keywords):
             return met
-    return GENERIC_MET
+    return None
+
+
+async def resolve_met(
+    user_id: UUID,
+    activity_name: str,
+    lookup: MetLookup | None = None,
+    cache: RedisMetCache | None = None,
+) -> ActivityMet:
+    """Find the metabolic equivalent, asking the provider only when needed.
+
+    The table answers instantly and for free, so it goes first. A provider is
+    worth a request only for an activity nobody tabulated here, and the answer
+    is remembered because it will not change.
+    """
+    tabulated = table_met(activity_name)
+    if tabulated is not None:
+        return ActivityMet(met=tabulated, source="table")
+
+    key = _fold(activity_name)
+
+    if cache is not None:
+        remembered = await cache.get(user_id, key)
+        if remembered is not None:
+            return ActivityMet(met=remembered, source="remembered")
+
+    if lookup is not None:
+        found = await lookup.met_for(user_id, activity_name)
+        if found is not None:
+            if cache is not None:
+                await cache.set(user_id, key, found)
+            return ActivityMet(met=found, source="provider")
+
+    return ActivityMet(met=GENERIC_MET, source="generic")
 
 
 def estimate_calories(
@@ -50,16 +109,20 @@ def estimate_calories(
     intensity: ExerciseIntensity,
     duration_minutes: int,
     weight_kg: Decimal | None,
+    met: Decimal | None = None,
 ) -> Decimal | None:
     """Estimate the expenditure, or nothing when body weight is unknown.
 
     Expenditure depends on how much body is being moved, so without a weight
-    any number would be invented rather than estimated.
+    any number would be invented rather than estimated. The arithmetic stays
+    here: a language model is asked what an activity costs, never to multiply.
     """
     if weight_kg is None or weight_kg <= 0 or duration_minutes <= 0:
         return None
 
-    met = metabolic_equivalent(activity_name) * INTENSITY_FACTORS[intensity]
+    base = met if met is not None else metabolic_equivalent(activity_name)
     hours = Decimal(duration_minutes) / MINUTES_PER_HOUR
 
-    return (met * weight_kg * hours).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
+    return (base * INTENSITY_FACTORS[intensity] * weight_kg * hours).quantize(
+        TWO_PLACES, rounding=ROUND_HALF_UP
+    )

@@ -23,7 +23,12 @@ La Fase 9 incluye, además de todo lo anterior:
 - IMC estimado a partir de la tendencia y la estatura, presentado como
   estimación y sin decir nada sobre la composición corporal.
 - El último peso registrado alimenta la estimación de gasto del ejercicio, que
-  ya no necesita que se escriba el peso en su formulario.
+  ya no necesita que se escriba el peso en su formulario: solo se pide la
+  primera vez, cuando el perfil todavía no lo sabe.
+- Para una actividad que la tabla de METs no cubre se consulta a OpenAI solo
+  ese valor, se comprueba que caiga en un rango posible y se recuerda. La
+  aritmética se queda aquí: al modelo se le pregunta cuánto cuesta una
+  actividad, nunca que multiplique.
 
 La Fase 8 aportó el ejercicio:
 

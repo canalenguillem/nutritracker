@@ -23,6 +23,8 @@ from app.services.food_analysis import FoodAnalysisService
 from app.services.food_estimate_cache import RedisFoodEstimateCache
 from app.services.google_oauth import GoogleOAuthService
 from app.services.meals import MealService
+from app.services.met_cache import RedisMetCache
+from app.services.met_lookup import OpenAIMetLookup
 from app.services.oauth_state import RedisOAuthStateStore
 from app.services.openai_food_analyzer import OpenAIFoodAnalyzer
 from app.services.profiles import ProfileService
@@ -75,11 +77,16 @@ def get_meal_service(session: SessionDependency) -> MealService:
 MealServiceDependency = Annotated[MealService, Depends(get_meal_service)]
 
 
-def get_exercise_service(session: SessionDependency) -> ExerciseService:
+def get_exercise_service(
+    request: Request, session: SessionDependency, settings: SettingsDependency
+) -> ExerciseService:
     return ExerciseService(
         exercises=SQLAlchemyExerciseRepository(session),
         daily_logs=SQLAlchemyDailyLogRepository(session),
         profiles=SQLAlchemyUserProfileRepository(session),
+        # Only consulted for an activity the published table does not cover.
+        met_lookup=OpenAIMetLookup(settings) if settings.food_analysis_enabled else None,
+        met_cache=RedisMetCache(request.app.state.redis_client),
     )
 
 
