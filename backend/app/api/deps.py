@@ -9,11 +9,14 @@ from app.db.session import get_db_session
 from app.models.enums import UserStatus
 from app.models.user import User
 from app.repositories.auth_identities import SQLAlchemyAuthIdentityRepository
+from app.repositories.daily_logs import SQLAlchemyDailyLogRepository
+from app.repositories.meals import SQLAlchemyMealRepository
 from app.repositories.refresh_tokens import SQLAlchemyRefreshTokenRepository
 from app.repositories.users import SQLAlchemyUserRepository
 from app.security.tokens import TokenValidationError, decode_access_token
 from app.services.auth import AuthService, RequestContext
 from app.services.google_oauth import GoogleOAuthService
+from app.services.meals import MealService
 from app.services.oauth_state import RedisOAuthStateStore
 from app.services.users import UserNotFoundError, UserService
 
@@ -51,6 +54,16 @@ def get_auth_service(
 
 
 AuthServiceDependency = Annotated[AuthService, Depends(get_auth_service)]
+
+
+def get_meal_service(session: SessionDependency) -> MealService:
+    return MealService(
+        meals=SQLAlchemyMealRepository(session),
+        daily_logs=SQLAlchemyDailyLogRepository(session),
+    )
+
+
+MealServiceDependency = Annotated[MealService, Depends(get_meal_service)]
 
 
 def get_google_oauth_service(request: Request, settings: SettingsDependency) -> GoogleOAuthService:

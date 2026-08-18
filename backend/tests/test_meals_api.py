@@ -1,0 +1,238 @@
+from collections.abc import AsyncIterator
+from typing import Any
+
+import pytest
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
+
+from app.core.config import Settings
+from app.main import create_app
+from app.models.base import Base
+
+MEAL = {
+    "meal_type": "lunch",
+    "eaten_at": "2026-08-18T12:30:00",
+    "notes": "Con aceite de oliva",
+    "items": [
+        {
+            "name": "Arroz",
+            "quantity": "150.00",
+            "unit": "g",
+            "kcal": "195.00",
+            "protein_g": "4.05",
+            "fat_g": "0.45",
+            "carbohydrates_g": "42.00",
+        },
+        {
+            "name": "Pollo a la plancha",
+            "quantity": "120.00",
+            "unit": "g",
+            "kcal": "198.00",
+            "protein_g": "37.20",
+            "fat_g": "4.30",
+            "carbohydrates_g": "0.00",
+        },
+    ],
+}
+
+
+@pytest.fixture
+async def application() -> AsyncIterator[FastAPI]:
+    settings = Settings(app_env="test", jwt_secret_key="api-test-secret-key-value-32-chars")
+    application = create_app(settings)
+    engine = create_async_engine(
+        "sqlite+aiosqlite://",
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
+    )
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+    application.state.session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    yield application
+    await engine.dispose()
+
+
+@pytest.fixture
+async def client(application: FastAPI) -> AsyncIterator[AsyncClient]:
+    transport = ASGITransport(app=application)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        yield client
+
+
+async def sign_up(client: AsyncClient, email: str = "user@example.com") -> dict[str, str]:
+    response = await client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "display_name": "Test User", "password": "secret-password"},
+    )
+    assert response.status_code == 201, response.text
+    return {"Authorization": f"Bearer {response.json()['access_token']}"}
+
+
+async def create_meal(
+    client: AsyncClient, headers: dict[str, str], **overrides: Any
+) -> dict[str, Any]:
+    response = await client.post("/api/v1/meals", json={**MEAL, **overrides}, headers=headers)
+    assert response.status_code == 201, response.text
+    body: dict[str, Any] = response.json()
+    return body
+
+
+async def test_creating_a_meal_returns_the_computed_totals(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+
+    body = await create_meal(client, headers)
+
+    assert body["total_kcal"] == "393.00"
+    assert body["protein_g"] == "41.25"
+    assert body["carbohydrates_g"] == "42.00"
+    assert body["source"] == "manual"
+    assert body["status"] == "confirmed"
+    assert len(body["items"]) == 2
+
+
+async def test_a_meal_needs_at_least_one_item(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+
+    response = await client.post("/api/v1/meals", json={**MEAL, "items": []}, headers=headers)
+
+    assert response.status_code == 422
+
+
+async def test_a_meal_rejects_negative_energy(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    items = [{**MEAL["items"][0], "kcal": "-10.00"}]  # type: ignore[index]
+
+    response = await client.post("/api/v1/meals", json={**MEAL, "items": items}, headers=headers)
+
+    assert response.status_code == 422
+
+
+async def test_meals_require_authentication(client: AsyncClient) -> None:
+    response = await client.get("/api/v1/meals")
+
+    assert response.status_code == 401
+
+
+async def test_listing_can_be_filtered_by_day(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    await create_meal(client, headers)
+    await create_meal(client, headers, eaten_at="2026-08-19T12:30:00")
+
+    response = await client.get("/api/v1/meals", params={"date": "2026-08-19"}, headers=headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["eaten_at"].startswith("2026-08-19")
+
+
+async def test_the_daily_summary_adds_up_the_meals_of_the_day(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    await create_meal(client, headers)
+    await create_meal(client, headers, meal_type="dinner", eaten_at="2026-08-18T21:00:00")
+
+    response = await client.get(
+        "/api/v1/meals/summary", params={"date": "2026-08-18"}, headers=headers
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["meal_count"] == 2
+    assert body["total_kcal"] == "786.00"
+
+
+async def test_a_meal_can_be_edited(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    meal = await create_meal(client, headers)
+
+    response = await client.patch(
+        f"/api/v1/meals/{meal['id']}",
+        json={"meal_type": "dinner", "notes": None},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["meal_type"] == "dinner"
+    assert body["notes"] is None
+    assert body["total_kcal"] == "393.00"
+
+
+async def test_replacing_the_items_returns_the_stored_items(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    meal = await create_meal(client, headers)
+
+    response = await client.patch(
+        f"/api/v1/meals/{meal['id']}",
+        json={
+            "items": [
+                {
+                    "name": "Manzana",
+                    "quantity": "180.00",
+                    "unit": "g",
+                    "kcal": "94.00",
+                    "protein_g": "0.50",
+                    "fat_g": "0.30",
+                    "carbohydrates_g": "25.00",
+                }
+            ]
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["total_kcal"] == "94.00"
+    assert [item["name"] for item in body["items"]] == ["Manzana"]
+    assert all(item["id"] for item in body["items"])
+
+    stored = await client.get(f"/api/v1/meals/{meal['id']}", headers=headers)
+    assert [item["name"] for item in stored.json()["items"]] == ["Manzana"]
+
+
+async def test_a_meal_can_be_deleted(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    meal = await create_meal(client, headers)
+
+    response = await client.delete(f"/api/v1/meals/{meal['id']}", headers=headers)
+    assert response.status_code == 204
+
+    missing = await client.get(f"/api/v1/meals/{meal['id']}", headers=headers)
+    assert missing.status_code == 404
+
+
+async def test_a_user_cannot_read_another_users_meal(client: AsyncClient) -> None:
+    owner_headers = await sign_up(client, "owner@example.com")
+    meal = await create_meal(client, owner_headers)
+    intruder_headers = await sign_up(client, "intruder@example.com")
+
+    response = await client.get(f"/api/v1/meals/{meal['id']}", headers=intruder_headers)
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "RESOURCE_NOT_FOUND"
+
+
+async def test_a_user_cannot_delete_another_users_meal(client: AsyncClient) -> None:
+    owner_headers = await sign_up(client, "owner@example.com")
+    meal = await create_meal(client, owner_headers)
+    intruder_headers = await sign_up(client, "intruder@example.com")
+
+    response = await client.delete(f"/api/v1/meals/{meal['id']}", headers=intruder_headers)
+    assert response.status_code == 404
+
+    still_there = await client.get(f"/api/v1/meals/{meal['id']}", headers=owner_headers)
+    assert still_there.status_code == 200
+
+
+async def test_a_user_only_lists_their_own_meals(client: AsyncClient) -> None:
+    owner_headers = await sign_up(client, "owner@example.com")
+    await create_meal(client, owner_headers)
+    intruder_headers = await sign_up(client, "intruder@example.com")
+
+    response = await client.get("/api/v1/meals", headers=intruder_headers)
+
+    assert response.status_code == 200
+    assert response.json() == []

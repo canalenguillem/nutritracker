@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
+from datetime import date
 from uuid import UUID, uuid4
 
 from app.models.base import utc_now
 from app.models.enums import AuthProvider, UserRole, UserStatus
+from app.models.meal import DailyLog, Meal
 from app.models.user import AuthIdentity, RefreshToken, User
 
 
@@ -64,3 +66,61 @@ class FakeAuthIdentityRepository:
             ),
             None,
         )
+
+
+@dataclass
+class FakeDailyLogRepository:
+    daily_logs: list[DailyLog] = field(default_factory=list)
+
+    async def add(self, daily_log: DailyLog) -> DailyLog:
+        daily_log.id = daily_log.id or uuid4()
+        self.daily_logs.append(daily_log)
+        return daily_log
+
+    async def get_by_date(self, user_id: UUID, log_date: date) -> DailyLog | None:
+        return next(
+            (
+                daily_log
+                for daily_log in self.daily_logs
+                if daily_log.user_id == user_id and daily_log.log_date == log_date
+            ),
+            None,
+        )
+
+
+@dataclass
+class FakeMealRepository:
+    daily_logs: FakeDailyLogRepository = field(default_factory=FakeDailyLogRepository)
+    meals: list[Meal] = field(default_factory=list)
+
+    async def add(self, meal: Meal) -> Meal:
+        meal.id = meal.id or uuid4()
+        for item in meal.items:
+            item.id = item.id or uuid4()
+        self.meals.append(meal)
+        return meal
+
+    async def get_for_user(self, user_id: UUID, meal_id: UUID) -> Meal | None:
+        return next(
+            (meal for meal in self.meals if meal.id == meal_id and meal.user_id == user_id),
+            None,
+        )
+
+    async def list_for_user(self, user_id: UUID, log_date: date | None = None) -> list[Meal]:
+        matches = [meal for meal in self.meals if meal.user_id == user_id]
+        if log_date is not None:
+            log_ids = {
+                daily_log.id
+                for daily_log in self.daily_logs.daily_logs
+                if daily_log.log_date == log_date
+            }
+            matches = [meal for meal in matches if meal.daily_log_id in log_ids]
+        return sorted(matches, key=lambda meal: meal.eaten_at, reverse=True)
+
+    async def remove(self, meal: Meal) -> None:
+        self.meals.remove(meal)
+
+    async def flush(self) -> None:
+        for meal in self.meals:
+            for item in meal.items:
+                item.id = item.id or uuid4()

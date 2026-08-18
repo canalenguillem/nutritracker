@@ -1,11 +1,25 @@
 from app.models.base import Base
-from app.models.enums import AuthProvider, UserRole, UserStatus
+from app.models.enums import (
+    AuthProvider,
+    MealSource,
+    MealStatus,
+    MealType,
+    UserRole,
+    UserStatus,
+)
+from app.models.meal import DailyLog, Meal, MealItem
 from app.models.user import AuthIdentity, RefreshToken, User, UserProfile
 
 __all__ = [
     "AuthIdentity",
     "AuthProvider",
     "Base",
+    "DailyLog",
+    "Meal",
+    "MealItem",
+    "MealSource",
+    "MealStatus",
+    "MealType",
     "RefreshToken",
     "User",
     "UserProfile",

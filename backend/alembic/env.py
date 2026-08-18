@@ -4,6 +4,7 @@ from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import AsyncEngine, async_engine_from_config
+from sqlalchemy.schema import SchemaItem
 
 from alembic import context
 from app.core.config import get_settings
@@ -17,6 +18,21 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+def include_object(
+    object_: SchemaItem,
+    name: str | None,
+    type_: str,
+    reflected: bool,
+    compare_to: SchemaItem | None,
+) -> bool:
+    """Ignore the check constraints that back the non-native enum columns.
+
+    MariaDB reports them, but the model never declares them as standalone
+    constraints, so every comparison would ask to drop them again.
+    """
+    return not (type_ == "check_constraint" and reflected and (name or "").startswith("ck_"))
+
+
 def get_database_url() -> str:
     return get_settings().database_url.render_as_string(hide_password=False)
 
@@ -28,6 +44,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -35,7 +52,12 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        compare_type=True,
+        include_object=include_object,
+    )
 
     with context.begin_transaction():
         context.run_migrations()
