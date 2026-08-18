@@ -39,6 +39,11 @@ La Fase 9 aportó el peso y el perfil:
 - El último peso registrado alimenta la estimación de gasto del ejercicio, que
   ya no necesita que se escriba el peso en su formulario: solo se pide la
   primera vez, cuando el perfil todavía no lo sabe.
+- La tabla de METs reconoce el comienzo de la palabra, de modo que caminar,
+  caminata y caminando caen en el mismo sitio, y no confunde «recorrido» con
+  correr.
+- Una caminata en cuesta se estima como lo que es: subir cuenta más que andar en
+  llano, y no se aplica a actividades que ya están valoradas alto.
 - Para una actividad que la tabla de METs no cubre se consulta a OpenAI solo
   ese valor, se comprueba que caiga en un rango posible y se recuerda. La
   aritmética se queda aquí: al modelo se le pregunta cuánto cuesta una

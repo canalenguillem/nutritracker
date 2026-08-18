@@ -13,24 +13,50 @@ TWO_PLACES = Decimal("0.01")
 MINUTES_PER_HOUR = Decimal("60")
 WHITESPACE = re.compile(r"\s+")
 
-# Metabolic equivalents for the activities people record most often, following
-# the Compendium of Physical Activities. Each value is an average for a whole
-# session at a normal effort, rest between rounds and sets included, which is
-# why the intensity below only nudges it.
-ACTIVITY_METS: tuple[tuple[tuple[str, ...], Decimal], ...] = (
+
+@dataclass(frozen=True)
+class ActivityFamily:
+    name: str
+    #: Word beginnings, so caminata, caminando and caminar all land together.
+    stems: tuple[str, ...]
+    met: Decimal
+
+
+# Metabolic equivalents following the Compendium of Physical Activities. Each
+# value is an average for a whole session at a normal effort, rest between
+# rounds and sets included, which is why the intensity below only nudges it.
+ACTIVITY_FAMILIES: tuple[ActivityFamily, ...] = (
     # A class is bag work in intervals: the Compendium puts a punching bag at
     # 5.5 and sparring at 7.8, while 12.8 is competitive boxing in a ring.
-    (("fitboxing", "boxeo", "boxing", "kickboxing", "muay"), Decimal("8.0")),
-    (("correr", "running", "carrera", "trote", "maraton"), Decimal("9.8")),
-    (("caminar", "andar", "walking", "paseo", "senderismo"), Decimal("3.5")),
-    (("bicicleta", "ciclismo", "bici", "cycling", "spinning"), Decimal("7.5")),
-    (("natacion", "nadar", "swimming", "piscina"), Decimal("7.0")),
-    (("pesas", "gimnasio", "fuerza", "musculacion", "crossfit"), Decimal("5.0")),
-    (("yoga", "pilates", "estiramientos", "movilidad"), Decimal("3.0")),
-    (("padel", "tenis", "futbol", "baloncesto", "squash"), Decimal("7.3")),
-    (("eliptica", "remo", "hiit", "circuito", "cinta"), Decimal("8.0")),
-    (("baile", "zumba", "danza"), Decimal("6.5")),
+    ActivityFamily("boxing", ("fitbox", "box", "kickbox", "muay"), Decimal("8.0")),
+    ActivityFamily("running", ("corr", "carrera", "running", "trot", "maraton"), Decimal("9.8")),
+    ActivityFamily("cycling", ("bici", "ciclismo", "cycling", "spinning", "pedal"), Decimal("7.5")),
+    ActivityFamily("swimming", ("nadar", "nadando", "natacion", "swim", "piscina"), Decimal("7.0")),
+    ActivityFamily(
+        "strength",
+        ("pesa", "gimnasio", "fuerza", "musculacion", "crossfit", "halterofilia"),
+        Decimal("5.0"),
+    ),
+    ActivityFamily("mobility", ("yoga", "pilates", "estiramiento", "movilidad"), Decimal("3.0")),
+    # Cross country hiking is 6.0, well above a walk on the flat.
+    ActivityFamily("hiking", ("senderismo", "hiking", "trekking", "excursion"), Decimal("6.0")),
+    ActivityFamily(
+        "racquet",
+        ("padel", "tenis", "futbol", "baloncesto", "squash", "basket"),
+        Decimal("7.3"),
+    ),
+    ActivityFamily("cardio", ("eliptica", "remo", "hiit", "circuito", "cinta"), Decimal("8.0")),
+    ActivityFamily("dance", ("baile", "bailar", "zumba", "danza"), Decimal("6.5")),
+    ActivityFamily(
+        "walking", ("camin", "andar", "andando", "walk", "paseo", "pasear"), Decimal("3.5")
+    ),
 )
+
+# Words that say the ground went up. Walking a hill is a different activity from
+# walking on the flat: the Compendium puts a 1-5% grade at 5.3 and 6-15% at 8.0,
+# against 3.5 on the level.
+HILL_STEMS = ("cuesta", "subida", "subiendo", "pendiente", "montana", "monte", "colina", "uphill")
+HILL_FACTOR = Decimal("1.8")
 
 GENERIC_MET = Decimal("6.0")
 
@@ -70,12 +96,30 @@ def metabolic_equivalent(activity_name: str) -> Decimal:
     return table_met(activity_name) or GENERIC_MET
 
 
+def _starts_any(words: tuple[str, ...], stems: tuple[str, ...]) -> bool:
+    """Match a stem against the start of a word, never mid-word.
+
+    Plain substrings would read "recorrido" as running, and would miss
+    "caminata" while matching "caminar".
+    """
+    return any(word.startswith(stem) for word in words for stem in stems)
+
+
 def table_met(activity_name: str) -> Decimal | None:
     """The published value for an activity the table knows, or nothing."""
-    folded = _fold(activity_name)
-    for keywords, met in ACTIVITY_METS:
-        if any(keyword in folded for keyword in keywords):
-            return met
+    words = tuple(_fold(activity_name).split(" "))
+
+    for family in ACTIVITY_FAMILIES:
+        if not _starts_any(words, family.stems):
+            continue
+
+        # Only walking gets the slope treatment: a run or a ride uphill is
+        # already priced near the top of its own band.
+        if family.name == "walking" and _starts_any(words, HILL_STEMS):
+            return family.met * HILL_FACTOR
+
+        return family.met
+
     return None
 
 
