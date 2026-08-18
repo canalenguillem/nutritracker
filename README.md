@@ -6,7 +6,15 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 10 incluye, además de todo lo anterior:
+La Fase 11 incluye, además de todo lo anterior:
+
+- Tiempo de ayuno, medido como el hueco entre la última comida y la primera del
+  día siguiente. No se registra a mano: ese dato ya lo describen las horas de
+  las comidas, y pedirlo otra vez solo invitaría a que se contradijeran.
+- Mientras no se haya comido nada en el día, el ayuno se muestra en curso y
+  cuenta hasta ahora, o hasta la medianoche del día consultado si ya pasó.
+
+La Fase 10 aportó el balance calórico:
 
 - Balance calórico del día: comida frente a gasto total, con el gasto en reposo
   estimado por Mifflin-St Jeor a partir de estatura, peso, edad y sexo.

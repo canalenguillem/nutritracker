@@ -58,6 +58,10 @@ export interface DailySummary extends Macros {
   readonly exerciseCount: number;
   /** Food minus exercise. On its own not a deficit; see the balance. */
   readonly netKcal: number;
+  readonly fastingHours: number | null;
+  readonly fastingStartedAt: string | null;
+  readonly fastingEndedAt: string | null;
+  readonly fastingOngoing: boolean;
   readonly balanceStatus: "estimated" | "needs_profile";
   readonly restingKcal: number | null;
   readonly livingKcal: number | null;

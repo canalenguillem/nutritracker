@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { DailyBalance } from "../components/DailyBalance";
 import { ExerciseCard } from "../components/ExerciseCard";
+import { FastingWindow } from "../components/FastingWindow";
 import { MacroTotals } from "../components/MacroTotals";
 import { MealCard } from "../components/MealCard";
 import { PageLoader } from "../components/PageLoader";
@@ -79,6 +80,8 @@ export const DashboardPage = () => {
         </article>
 
         <DailyBalance summary={summary} />
+
+        <FastingWindow summary={summary} />
 
         <div className="dashboard__meals">
           <h2>Lo que has comido</h2>

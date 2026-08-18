@@ -39,3 +39,18 @@ export const formatDay = (day: string): string => {
     month: "long",
   }).format(new Date(year, month - 1, date));
 };
+
+/** Hours as a person says them: "16 h 20 min", not "16,33 h". */
+export const formatFastingLength = (hours: number): string => {
+  const wholeHours = Math.floor(hours);
+  const minutes = Math.round((hours - wholeHours) * 60);
+
+  if (minutes === 0) {
+    return `${wholeHours} h`;
+  }
+  if (minutes === 60) {
+    return `${wholeHours + 1} h`;
+  }
+
+  return `${wholeHours} h ${minutes} min`;
+};

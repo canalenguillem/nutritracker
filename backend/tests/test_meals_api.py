@@ -528,3 +528,32 @@ async def test_recent_meals_are_private(client: AsyncClient) -> None:
     response = await client.get("/api/v1/meals/recent", headers=intruder_headers)
 
     assert response.json() == []
+
+
+async def test_the_summary_reports_the_fast_that_ended_today(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    await create_meal(client, headers, eaten_at="2026-08-17T21:00:00")
+    await create_meal(client, headers, eaten_at="2026-08-18T11:00:00")
+
+    response = await client.get(
+        "/api/v1/meals/summary", params={"date": "2026-08-18"}, headers=headers
+    )
+
+    body = response.json()
+    assert body["fasting_hours"] == "14.00"
+    assert body["fasting_started_at"] == "2026-08-17T21:00:00Z"
+    assert body["fasting_ended_at"] == "2026-08-18T11:00:00Z"
+    assert body["fasting_ongoing"] is False
+
+
+async def test_the_first_meal_ever_leaves_no_fast_to_report(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    await create_meal(client, headers, eaten_at="2026-08-18T11:00:00")
+
+    response = await client.get(
+        "/api/v1/meals/summary", params={"date": "2026-08-18"}, headers=headers
+    )
+
+    body = response.json()
+    assert body["fasting_hours"] is None
+    assert body["fasting_started_at"] is None

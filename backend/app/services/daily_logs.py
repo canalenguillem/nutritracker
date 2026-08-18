@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.models.meal import DailyLog
@@ -14,13 +14,23 @@ def local_log_date(moment: datetime, timezone_name: str) -> date:
     Timestamps are stored as naive UTC, so a meal eaten just after midnight in
     Madrid must not be filed under the previous day.
     """
-    try:
-        timezone = ZoneInfo(timezone_name)
-    except (ZoneInfoNotFoundError, ValueError):
-        timezone = UTC_ZONE
-
     aware = moment if moment.tzinfo is not None else moment.replace(tzinfo=UTC_ZONE)
-    return aware.astimezone(timezone).date()
+    return aware.astimezone(_zone(timezone_name)).date()
+
+
+def _zone(timezone_name: str) -> ZoneInfo:
+    try:
+        return ZoneInfo(timezone_name)
+    except (ZoneInfoNotFoundError, ValueError):
+        return UTC_ZONE
+
+
+def end_of_day(log_date: date, timezone_name: str) -> datetime:
+    """The midnight closing that day, as the naive UTC everything is stored in."""
+    local_midnight = datetime.combine(
+        log_date + timedelta(days=1), datetime.min.time(), tzinfo=_zone(timezone_name)
+    )
+    return local_midnight.astimezone(UTC_ZONE).replace(tzinfo=None)
 
 
 def naive_utc(moment: datetime) -> datetime:

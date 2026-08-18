@@ -8,7 +8,7 @@ from app.models.meal import Meal, MealItem
 from app.models.user import User
 from app.repositories.daily_logs import DailyLogRepository
 from app.repositories.meals import MealRepository
-from app.services.daily_logs import naive_utc, resolve_daily_log
+from app.services.daily_logs import end_of_day, naive_utc, resolve_daily_log
 
 TWO_PLACES = Decimal("0.01")
 
@@ -58,6 +58,17 @@ class MealTotals:
 
 
 @dataclass(frozen=True)
+class FastingWindow:
+    """The gap between one meal and the next, which is what a fast is."""
+
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
+    hours: Decimal | None = None
+    #: True while nothing has been eaten yet and the clock is still running.
+    ongoing: bool = False
+
+
+@dataclass(frozen=True)
 class DailyTotals:
     log_date: date
     meal_count: int = 0
@@ -104,6 +115,41 @@ class MealService:
 
     async def list_meals(self, user: User, log_date: date | None = None) -> list[Meal]:
         return await self._meals.list_for_user(user.id, log_date)
+
+    async def fasting_window(self, user: User, log_date: date, now: datetime) -> FastingWindow:
+        """How long the fast that ended on this day lasted.
+
+        Nothing is recorded for it: the gap is already described by when the
+        meals were eaten, and asking for it again would only invite it to
+        disagree with them.
+        """
+        meals = await self._meals.list_for_user(user.id, log_date)
+
+        if meals:
+            # list_for_user hands them back newest first.
+            first_of_day = meals[-1]
+            previous = await self._meals.last_before(user.id, first_of_day.eaten_at)
+            if previous is None:
+                return FastingWindow()
+
+            return FastingWindow(
+                started_at=previous.eaten_at,
+                ended_at=first_of_day.eaten_at,
+                hours=_hours_between(previous.eaten_at, first_of_day.eaten_at),
+            )
+
+        # Nothing eaten on this day yet, so the fast is still running.
+        day_end = min(now, end_of_day(log_date, user.timezone))
+        previous = await self._meals.last_before(user.id, day_end)
+        if previous is None or day_end <= previous.eaten_at:
+            return FastingWindow()
+
+        return FastingWindow(
+            started_at=previous.eaten_at,
+            ended_at=None,
+            hours=_hours_between(previous.eaten_at, day_end),
+            ongoing=True,
+        )
 
     async def recent_meals(
         self, user: User, query: str | None = None, limit: int = 10
@@ -203,3 +249,8 @@ def _apply_totals(meal: Meal) -> None:
     meal.protein_g = totals.protein_g
     meal.fat_g = totals.fat_g
     meal.carbohydrates_g = totals.carbohydrates_g
+
+
+def _hours_between(start: datetime, end: datetime) -> Decimal:
+    minutes = Decimal((end - start).total_seconds()) / Decimal("60")
+    return (minutes / Decimal("60")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)

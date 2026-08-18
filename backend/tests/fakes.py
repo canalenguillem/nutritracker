@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID, uuid4
 
 from app.models.base import utc_now
@@ -131,6 +131,12 @@ class FakeMealRepository:
                 or needle in (meal.notes or "").lower()
             ]
         return sorted(matches, key=lambda meal: meal.eaten_at, reverse=True)[:limit]
+
+    async def last_before(self, user_id: UUID, moment: datetime) -> Meal | None:
+        earlier = [
+            meal for meal in self.meals if meal.user_id == user_id and meal.eaten_at < moment
+        ]
+        return max(earlier, key=lambda meal: meal.eaten_at, default=None)
 
     async def remove(self, meal: Meal) -> None:
         self.meals.remove(meal)

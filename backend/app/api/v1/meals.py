@@ -84,6 +84,7 @@ async def read_daily_summary(
     performed = await exercises.list_exercises(user, day)
     burned = sum((exercise.counted_calories for exercise in performed), Decimal("0.00"))
     profile = await profiles.get_profile(user)
+    fasting = await service.fasting_window(user, day, utc_now())
 
     balance = energy_balance(
         consumed_kcal=summary.totals.kcal,
@@ -107,6 +108,10 @@ async def read_daily_summary(
         exercise_kcal=burned,
         exercise_count=len(performed),
         net_kcal=summary.totals.kcal - burned,
+        fasting_hours=fasting.hours,
+        fasting_started_at=fasting.started_at,
+        fasting_ended_at=fasting.ended_at,
+        fasting_ongoing=fasting.ongoing,
         balance_status=balance.status,
         resting_kcal=balance.resting_kcal,
         living_kcal=balance.living_kcal,

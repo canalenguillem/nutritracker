@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Protocol
 from uuid import UUID
 
@@ -18,6 +18,8 @@ class MealRepository(Protocol):
     async def list_recent_for_user(
         self, user_id: UUID, query: str | None, limit: int
     ) -> list[Meal]: ...
+
+    async def last_before(self, user_id: UUID, moment: datetime) -> Meal | None: ...
 
     async def remove(self, meal: Meal) -> None: ...
 
@@ -68,6 +70,16 @@ class SQLAlchemyMealRepository:
         statement = statement.order_by(Meal.eaten_at.desc()).limit(limit)
         result = await self._session.scalars(statement)
         return list(result)
+
+    async def last_before(self, user_id: UUID, moment: datetime) -> Meal | None:
+        statement = (
+            select(Meal)
+            .where(Meal.user_id == user_id, Meal.eaten_at < moment)
+            .order_by(Meal.eaten_at.desc())
+            .limit(1)
+        )
+        meal: Meal | None = await self._session.scalar(statement)
+        return meal
 
     async def remove(self, meal: Meal) -> None:
         # Deleting through the session lets the ORM cascade reach the meal items.

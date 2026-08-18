@@ -91,9 +91,17 @@ class DailySummaryResponse(BaseModel):
     # Food minus exercise. On its own this is not a deficit, which is why the
     # balance below is reported separately.
     net_kcal: Decimal
+    fasting_hours: Decimal | None
+    fasting_started_at: datetime | None
+    fasting_ended_at: datetime | None
+    fasting_ongoing: bool
     balance_status: str
     resting_kcal: Decimal | None
     living_kcal: Decimal | None
     exercise_above_resting_kcal: Decimal | None
     total_expenditure_kcal: Decimal | None
     balance_kcal: Decimal | None
+
+    @field_serializer("fasting_started_at", "fasting_ended_at")
+    def serialize_fasting_instant(self, moment: datetime | None) -> datetime | None:
+        return None if moment is None else moment.replace(tzinfo=UTC)
