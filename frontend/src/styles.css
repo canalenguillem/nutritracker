@@ -1982,3 +1982,64 @@ select.form-field__input {
   font-size: 0.76rem;
   line-height: 1.5;
 }
+
+.photo-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  margin-top: 0.35rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.9rem;
+  background: rgb(255 255 255 / 80%);
+}
+
+.photo-preview img {
+  flex: none;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 0.6rem;
+  background: var(--color-cream);
+  object-fit: cover;
+}
+
+.photo-preview__detail {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.photo-preview__name {
+  margin: 0;
+  color: var(--color-green-dark);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.photo-preview__size {
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.photo-preview__check {
+  margin: 0.1rem 0 0;
+  color: var(--color-ink-soft);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.photo-preview__remove {
+  justify-self: start;
+  margin-top: 0.3rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-error);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}

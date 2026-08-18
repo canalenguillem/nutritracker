@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -7,6 +7,7 @@ import { EstimatePanel } from "../components/EstimatePanel";
 import { FormField } from "../components/FormField";
 import { mealTypeOptions } from "../features/meals/mealLabels";
 import { getMealErrorMessage } from "../features/meals/mealErrors";
+import { formatFileSize, preparePhoto } from "../features/meals/photoPreparation";
 import { useCreateMeal, useDescribeMeal } from "../features/meals/useMeals";
 import { mealFormSchema } from "../schemas/mealSchema";
 import type { FoodEstimate, MealFormValues, MealItemFormValues } from "../types/meal";
@@ -51,6 +52,10 @@ export const AddMealPage = () => {
   const [estimate, setEstimate] = useState<FoodEstimate | null>(null);
   const [description, setDescription] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isPreparingPhoto, setIsPreparingPhoto] = useState(false);
+  const cameraInput = useRef<HTMLInputElement>(null);
+  const galleryInput = useRef<HTMLInputElement>(null);
   const [now] = useState(() => new Date());
 
   const {
@@ -70,6 +75,42 @@ export const AddMealPage = () => {
   });
 
   const { fields, append, remove, replace } = useFieldArray({ control, name: "items" });
+
+  // The preview holds an object URL, which has to be handed back.
+  useEffect(() => {
+    if (!photo) {
+      setPhotoPreview(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(photo);
+    setPhotoPreview(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [photo]);
+
+  const onPickPhoto = async (file: File | undefined) => {
+    if (!file) {
+      return;
+    }
+
+    setIsPreparingPhoto(true);
+    try {
+      setPhoto(await preparePhoto(file));
+    } finally {
+      setIsPreparingPhoto(false);
+    }
+  };
+
+  const clearPhoto = () => {
+    setPhoto(null);
+    if (cameraInput.current) {
+      cameraInput.current.value = "";
+    }
+    if (galleryInput.current) {
+      galleryInput.current.value = "";
+    }
+  };
 
   const onEstimate = async () => {
     setEstimateError(null);
@@ -138,35 +179,69 @@ export const AddMealPage = () => {
           </div>
 
           <div className="describe__photo">
-            <label className="describe__photo-pick" htmlFor="meal-photo">
+            <label className="describe__photo-pick" htmlFor="meal-photo-camera">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M4 8h3l1.5-2h7L17 8h3v11H4z" />
                 <circle cx="12" cy="13" r="3.5" />
               </svg>
-              {photo ? "Cambiar la foto" : "Añadir foto de la etiqueta"}
+              Hacer una foto
             </label>
             <input
               className="describe__photo-input"
-              id="meal-photo"
+              id="meal-photo-camera"
+              ref={cameraInput}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(event) => void onPickPhoto(event.target.files?.[0])}
+              disabled={describeMeal.isPending || isPreparingPhoto}
+            />
+
+            <label className="describe__photo-pick" htmlFor="meal-photo-file">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 19V5h9l5 5v9z" />
+                <path d="M14 5v5h5" />
+              </svg>
+              Elegir una imagen
+            </label>
+            <input
+              className="describe__photo-input"
+              id="meal-photo-file"
+              ref={galleryInput}
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              capture="environment"
-              onChange={(event) => setPhoto(event.target.files?.[0] ?? null)}
-              disabled={describeMeal.isPending}
+              onChange={(event) => void onPickPhoto(event.target.files?.[0])}
+              disabled={describeMeal.isPending || isPreparingPhoto}
             />
-            {photo ? (
-              <span className="describe__photo-name">
-                {photo.name}
-                <button type="button" onClick={() => setPhoto(null)}>
-                  Quitar
-                </button>
-              </span>
-            ) : (
+
+            {isPreparingPhoto ? (
+              <span className="describe__photo-hint">Preparando la foto…</span>
+            ) : null}
+
+            {!photo && !isPreparingPhoto ? (
               <span className="describe__photo-hint">
                 Con la tabla nutricional el cálculo es mucho más fiable.
               </span>
-            )}
+            ) : null}
           </div>
+
+          {photo ? (
+            <div className="photo-preview">
+              {photoPreview ? (
+                <img src={photoPreview} alt="La foto que vas a enviar" />
+              ) : null}
+              <div className="photo-preview__detail">
+                <p className="photo-preview__name">Foto lista para enviar</p>
+                <p className="photo-preview__size">{formatFileSize(photo.size)}</p>
+                <p className="photo-preview__check">
+                  Comprueba que la tabla se lee antes de estimar.
+                </p>
+                <button className="photo-preview__remove" type="button" onClick={clearPhoto}>
+                  Quitar la foto
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           <p className="describe__notice">
             La foto se envía a OpenAI para leerla y no se guarda en ningún sitio.
