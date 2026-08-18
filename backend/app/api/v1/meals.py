@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
@@ -6,6 +7,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, sta
 
 from app.api.deps import (
     CurrentUserDependency,
+    ExerciseServiceDependency,
     FoodAnalysisServiceDependency,
     MealServiceDependency,
     SettingsDependency,
@@ -24,6 +26,7 @@ from app.schemas.meals import (
     MealResponse,
     MealUpdateRequest,
 )
+from app.services.daily_logs import local_log_date
 from app.services.food_analysis import (
     FoodAnalysisDisabledError,
     FoodAnalysisError,
@@ -37,7 +40,6 @@ from app.services.meals import (
     MealNotFoundError,
     NewMeal,
     NewMealItem,
-    local_log_date,
 )
 
 router = APIRouter(prefix="/meals", tags=["meals"])
@@ -71,10 +73,14 @@ async def list_meals(
 async def read_daily_summary(
     user: CurrentUserDependency,
     service: MealServiceDependency,
+    exercises: ExerciseServiceDependency,
     log_date: LogDateQuery = None,
 ) -> DailySummaryResponse:
     day = log_date if log_date is not None else local_log_date(utc_now(), user.timezone)
     summary = await service.daily_totals(user, day)
+    performed = await exercises.list_exercises(user, day)
+    burned = sum((exercise.counted_calories for exercise in performed), Decimal("0.00"))
+
     return DailySummaryResponse(
         log_date=summary.log_date,
         meal_count=summary.meal_count,
@@ -82,6 +88,9 @@ async def read_daily_summary(
         protein_g=summary.totals.protein_g,
         fat_g=summary.totals.fat_g,
         carbohydrates_g=summary.totals.carbohydrates_g,
+        exercise_kcal=burned,
+        exercise_count=len(performed),
+        net_kcal=summary.totals.kcal - burned,
     )
 
 

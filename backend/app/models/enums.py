@@ -36,3 +36,16 @@ class MealStatus(StrEnum):
     CONFIRMED = "confirmed"
     FAILED = "failed"
     CANCELLED = "cancelled"
+
+
+class ExerciseIntensity(StrEnum):
+    LOW = "low"
+    MODERATE = "moderate"
+    HIGH = "high"
+    VERY_HIGH = "very_high"
+
+
+class ExerciseSource(StrEnum):
+    MANUAL = "manual"
+    DEVICE = "device"
+    IMPORTED = "imported"

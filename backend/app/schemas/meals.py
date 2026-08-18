@@ -77,3 +77,8 @@ class DailySummaryResponse(BaseModel):
     protein_g: Decimal
     fat_g: Decimal
     carbohydrates_g: Decimal
+    exercise_kcal: Decimal
+    exercise_count: int
+    # Food minus exercise. This is not a deficit: the baseline expenditure is
+    # unknown until the profile records height, weight, age and activity.
+    net_kcal: Decimal

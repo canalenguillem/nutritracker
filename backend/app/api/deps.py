@@ -10,11 +10,14 @@ from app.models.enums import UserStatus
 from app.models.user import User
 from app.repositories.auth_identities import SQLAlchemyAuthIdentityRepository
 from app.repositories.daily_logs import SQLAlchemyDailyLogRepository
+from app.repositories.exercises import SQLAlchemyExerciseRepository
 from app.repositories.meals import SQLAlchemyMealRepository
 from app.repositories.refresh_tokens import SQLAlchemyRefreshTokenRepository
+from app.repositories.user_profiles import SQLAlchemyUserProfileRepository
 from app.repositories.users import SQLAlchemyUserRepository
 from app.security.tokens import TokenValidationError, decode_access_token
 from app.services.auth import AuthService, RequestContext
+from app.services.exercises import ExerciseService
 from app.services.food_analysis import FoodAnalysisService
 from app.services.food_estimate_cache import RedisFoodEstimateCache
 from app.services.google_oauth import GoogleOAuthService
@@ -67,6 +70,17 @@ def get_meal_service(session: SessionDependency) -> MealService:
 
 
 MealServiceDependency = Annotated[MealService, Depends(get_meal_service)]
+
+
+def get_exercise_service(session: SessionDependency) -> ExerciseService:
+    return ExerciseService(
+        exercises=SQLAlchemyExerciseRepository(session),
+        daily_logs=SQLAlchemyDailyLogRepository(session),
+        profiles=SQLAlchemyUserProfileRepository(session),
+    )
+
+
+ExerciseServiceDependency = Annotated[ExerciseService, Depends(get_exercise_service)]
 
 
 def get_food_analysis_service(

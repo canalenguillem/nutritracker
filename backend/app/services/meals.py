@@ -2,13 +2,13 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from uuid import UUID
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.models.enums import MealSource, MealStatus, MealType
-from app.models.meal import DailyLog, Meal, MealItem
+from app.models.meal import Meal, MealItem
 from app.models.user import User
 from app.repositories.daily_logs import DailyLogRepository
 from app.repositories.meals import MealRepository
+from app.services.daily_logs import naive_utc, resolve_daily_log
 
 TWO_PLACES = Decimal("0.01")
 
@@ -77,21 +77,6 @@ def _sum_items(items: list[MealItem]) -> MealTotals:
     )
 
 
-def local_log_date(eaten_at: datetime, timezone_name: str) -> date:
-    """Return the calendar day the meal belongs to for the user reading it.
-
-    Timestamps are stored as naive UTC, so a meal eaten just after midnight in
-    Madrid must not be filed under the previous day.
-    """
-    try:
-        timezone = ZoneInfo(timezone_name)
-    except (ZoneInfoNotFoundError, ValueError):
-        timezone = ZoneInfo("UTC")
-
-    moment = eaten_at if eaten_at.tzinfo is not None else eaten_at.replace(tzinfo=ZoneInfo("UTC"))
-    return moment.astimezone(timezone).date()
-
-
 class MealService:
     def __init__(self, meals: MealRepository, daily_logs: DailyLogRepository) -> None:
         self._meals = meals
@@ -101,8 +86,8 @@ class MealService:
         if not data.items:
             raise EmptyMealError
 
-        eaten_at = _naive_utc(data.eaten_at)
-        daily_log = await self._resolve_daily_log(user, eaten_at)
+        eaten_at = naive_utc(data.eaten_at)
+        daily_log = await resolve_daily_log(self._daily_logs, user, eaten_at)
         meal = Meal(
             daily_log_id=daily_log.id,
             user_id=user.id,
@@ -165,9 +150,9 @@ class MealService:
             meal.notes = _clean_notes(changes.notes)
 
         if changes.eaten_at is not None:
-            eaten_at = _naive_utc(changes.eaten_at)
+            eaten_at = naive_utc(changes.eaten_at)
             meal.eaten_at = eaten_at
-            daily_log = await self._resolve_daily_log(user, eaten_at)
+            daily_log = await resolve_daily_log(self._daily_logs, user, eaten_at)
             meal.daily_log_id = daily_log.id
 
         # Flush so replaced items carry their identifiers into the response.
@@ -190,20 +175,6 @@ class MealService:
                 carbohydrates_g=_round(sum((meal.carbohydrates_g for meal in meals), Decimal("0"))),
             ),
         )
-
-    async def _resolve_daily_log(self, user: User, eaten_at: datetime) -> DailyLog:
-        log_date = local_log_date(eaten_at, user.timezone)
-        daily_log = await self._daily_logs.get_by_date(user.id, log_date)
-        if daily_log is not None:
-            return daily_log
-        return await self._daily_logs.add(DailyLog(user_id=user.id, log_date=log_date))
-
-
-def _naive_utc(moment: datetime) -> datetime:
-    """Store every timestamp as naive UTC, whatever offset the client sent."""
-    if moment.tzinfo is None:
-        return moment
-    return moment.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
 
 
 def _clean_notes(notes: str | None) -> str | None:

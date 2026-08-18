@@ -6,6 +6,7 @@ import pytest
 
 from app.models.enums import MealSource, MealStatus, MealType
 from app.models.user import User
+from app.services.daily_logs import local_log_date
 from app.services.meals import (
     EmptyMealError,
     MealChanges,
@@ -13,7 +14,6 @@ from app.services.meals import (
     MealService,
     NewMeal,
     NewMealItem,
-    local_log_date,
 )
 from fakes import FakeDailyLogRepository, FakeMealRepository
 

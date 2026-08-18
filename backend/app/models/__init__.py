@@ -1,12 +1,15 @@
 from app.models.base import Base
 from app.models.enums import (
     AuthProvider,
+    ExerciseIntensity,
+    ExerciseSource,
     MealSource,
     MealStatus,
     MealType,
     UserRole,
     UserStatus,
 )
+from app.models.exercise import Exercise
 from app.models.meal import DailyLog, Meal, MealItem
 from app.models.user import AuthIdentity, RefreshToken, User, UserProfile
 
@@ -15,6 +18,9 @@ __all__ = [
     "AuthProvider",
     "Base",
     "DailyLog",
+    "Exercise",
+    "ExerciseIntensity",
+    "ExerciseSource",
     "Meal",
     "MealItem",
     "MealSource",
