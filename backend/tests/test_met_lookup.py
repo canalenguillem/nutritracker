@@ -43,7 +43,7 @@ async def test_a_tabulated_activity_never_asks_the_provider() -> None:
     resolved = await resolve_met(USER_ID, "Brooklyn Fitboxing", lookup=lookup)
 
     assert resolved.source == "table"
-    assert resolved.met == Decimal("9.5")
+    assert resolved.met == Decimal("8.0")
     assert lookup.calls == []
 
 

@@ -27,6 +27,8 @@ LIVING_FACTORS: dict[str, Decimal] = {
 }
 DEFAULT_LIVING_FACTOR = LIVING_FACTORS["moderate"]
 
+MINUTES_PER_DAY = Decimal("1440")
+
 BalanceStatus = Literal["estimated", "needs_profile"]
 
 
@@ -37,6 +39,8 @@ class EnergyBalance:
     exercise_kcal: Decimal
     resting_kcal: Decimal | None = None
     living_kcal: Decimal | None = None
+    #: What the training added on top of resting, which living already covers.
+    exercise_above_resting_kcal: Decimal | None = None
     total_expenditure_kcal: Decimal | None = None
     balance_kcal: Decimal | None = None
 
@@ -75,6 +79,7 @@ def energy_balance(
     *,
     consumed_kcal: Decimal,
     exercise_kcal: Decimal,
+    exercise_minutes: int,
     weight_kg: Decimal | None,
     height_cm: Decimal | None,
     birth_date: date | None,
@@ -98,7 +103,13 @@ def energy_balance(
 
     resting = resting_energy(weight_kg, height_cm, age_on(birth_date, today), biological_sex)
     living = _round(resting * LIVING_FACTORS.get(activity_level, DEFAULT_LIVING_FACTOR))
-    total = _round(living + exercise_kcal)
+
+    # A metabolic equivalent of 1 is resting, so the figure for a session already
+    # contains the resting energy of those minutes, and daily living covers all
+    # 24 hours. Only what the training added above resting belongs on top.
+    resting_during_training = resting * Decimal(exercise_minutes) / MINUTES_PER_DAY
+    above_resting = _round(max(exercise_kcal - resting_during_training, Decimal("0")))
+    total = _round(living + above_resting)
 
     return EnergyBalance(
         status="estimated",
@@ -106,6 +117,7 @@ def energy_balance(
         exercise_kcal=exercise_kcal,
         resting_kcal=resting,
         living_kcal=living,
+        exercise_above_resting_kcal=above_resting,
         total_expenditure_kcal=total,
         balance_kcal=_round(consumed_kcal - total),
     )

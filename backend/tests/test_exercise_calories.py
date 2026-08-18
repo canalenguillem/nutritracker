@@ -7,8 +7,8 @@ WEIGHT = Decimal("80")
 
 
 def test_a_known_activity_uses_its_own_value() -> None:
-    assert metabolic_equivalent("Brooklyn Fitboxing") == Decimal("9.5")
-    assert metabolic_equivalent("Sesión de FITBOXING") == Decimal("9.5")
+    assert metabolic_equivalent("Brooklyn Fitboxing") == Decimal("8.0")
+    assert metabolic_equivalent("Sesión de FITBOXING") == Decimal("8.0")
 
 
 def test_accents_do_not_hide_an_activity() -> None:
@@ -20,10 +20,10 @@ def test_an_unknown_activity_falls_back_to_a_general_value() -> None:
 
 
 def test_a_fitboxing_session_is_estimated_from_weight_and_time() -> None:
-    # 9.5 MET * 1.2 for high intensity * 80 kg * 47/60 h
+    # 8.0 MET * 1.12 for a hard effort * 80 kg * 47/60 h
     estimate = estimate_calories("Brooklyn Fitboxing", ExerciseIntensity.HIGH, 47, WEIGHT)
 
-    assert estimate == Decimal("714.40")
+    assert estimate == Decimal("561.49")
 
 
 def test_intensity_moves_the_estimate() -> None:

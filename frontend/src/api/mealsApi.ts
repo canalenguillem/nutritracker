@@ -68,6 +68,10 @@ const toDailySummary = (response: DailySummaryResponse): DailySummary => ({
   balanceStatus: response.balance_status,
   restingKcal: response.resting_kcal === null ? null : Number(response.resting_kcal),
   livingKcal: response.living_kcal === null ? null : Number(response.living_kcal),
+  exerciseAboveRestingKcal:
+    response.exercise_above_resting_kcal === null
+      ? null
+      : Number(response.exercise_above_resting_kcal),
   totalExpenditureKcal:
     response.total_expenditure_kcal === null
       ? null

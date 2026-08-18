@@ -85,5 +85,6 @@ class DailySummaryResponse(BaseModel):
     balance_status: str
     resting_kcal: Decimal | None
     living_kcal: Decimal | None
+    exercise_above_resting_kcal: Decimal | None
     total_expenditure_kcal: Decimal | None
     balance_kcal: Decimal | None

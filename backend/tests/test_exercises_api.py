@@ -76,8 +76,8 @@ async def test_giving_a_weight_produces_an_estimate(client: AsyncClient) -> None
 
     body = await record(client, headers, weight_kg="80.00")
 
-    assert body["estimated_calories"] == "714.40"
-    assert body["counted_calories"] == "714.40"
+    assert body["estimated_calories"] == "561.49"
+    assert body["counted_calories"] == "561.49"
 
 
 async def test_the_weight_is_remembered_for_the_next_session(client: AsyncClient) -> None:
@@ -86,7 +86,7 @@ async def test_the_weight_is_remembered_for_the_next_session(client: AsyncClient
 
     body = await record(client, headers, performed_at="2026-08-19T19:30:00")
 
-    assert body["estimated_calories"] == "714.40"
+    assert body["estimated_calories"] == "561.49"
 
 
 async def test_the_persons_own_number_wins(client: AsyncClient) -> None:
@@ -94,7 +94,7 @@ async def test_the_persons_own_number_wins(client: AsyncClient) -> None:
 
     body = await record(client, headers, weight_kg="80.00", confirmed_calories="520.00")
 
-    assert body["estimated_calories"] == "714.40"
+    assert body["estimated_calories"] == "561.49"
     assert body["confirmed_calories"] == "520.00"
     assert body["counted_calories"] == "520.00"
 
@@ -118,7 +118,7 @@ async def test_changing_the_effort_recomputes_the_estimate(client: AsyncClient) 
     )
 
     assert response.status_code == 200, response.text
-    assert response.json()["estimated_calories"] == "760.00"
+    assert response.json()["estimated_calories"] == "640.00"
 
 
 async def test_a_session_can_be_deleted(client: AsyncClient) -> None:
@@ -187,9 +187,9 @@ async def test_the_daily_summary_counts_the_exercise(client: AsyncClient) -> Non
 
     body = response.json()
     assert body["total_kcal"] == "800.00"
-    assert body["exercise_kcal"] == "714.40"
+    assert body["exercise_kcal"] == "561.49"
     assert body["exercise_count"] == 1
-    assert body["net_kcal"] == "85.60"
+    assert body["net_kcal"] == "238.51"
 
 
 async def test_the_summary_reports_a_deficit_once_the_profile_is_complete(
@@ -240,8 +240,10 @@ async def test_the_summary_reports_a_deficit_once_the_profile_is_complete(
     assert body["balance_status"] == "estimated"
     assert body["resting_kcal"] == "1892"
     assert body["living_kcal"] == "2554"
-    assert body["total_expenditure_kcal"] == "3613"
-    assert body["balance_kcal"] == "-2178"
+    # Of the 1059 confirmed, 62 was the resting that daily living already counts.
+    assert body["exercise_above_resting_kcal"] == "997"
+    assert body["total_expenditure_kcal"] == "3551"
+    assert body["balance_kcal"] == "-2116"
 
 
 async def test_the_summary_withholds_a_balance_without_a_profile(client: AsyncClient) -> None:

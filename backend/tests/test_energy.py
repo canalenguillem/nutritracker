@@ -36,7 +36,8 @@ def test_an_unstated_sex_lands_between_the_two() -> None:
 def test_the_balance_counts_resting_living_and_training() -> None:
     balance = energy_balance(
         consumed_kcal=Decimal("1435.00"),
-        exercise_kcal=Decimal("1059.00"),
+        exercise_kcal=Decimal("805.82"),
+        exercise_minutes=47,
         weight_kg=Decimal("105.40"),
         height_cm=Decimal("174.00"),
         birth_date=date(1974, 9, 11),
@@ -47,10 +48,47 @@ def test_the_balance_counts_resting_living_and_training() -> None:
 
     assert balance.status == "estimated"
     assert balance.resting_kcal == Decimal("1892")
-    # 1892 * 1.35 for daily living, then the training on top.
+    # 1892 * 1.35 for daily living.
     assert balance.living_kcal == Decimal("2554")
-    assert balance.total_expenditure_kcal == Decimal("3613")
-    assert balance.balance_kcal == Decimal("-2178")
+    # The session cost 806, of which 62 was resting that living already counts.
+    assert balance.exercise_above_resting_kcal == Decimal("744")
+    assert balance.total_expenditure_kcal == Decimal("3298")
+    assert balance.balance_kcal == Decimal("-1863")
+
+
+def test_resting_is_not_counted_twice_during_training() -> None:
+    """A session priced at exactly resting adds nothing to the day."""
+    resting_only = energy_balance(
+        consumed_kcal=Decimal("2000"),
+        # An hour at a metabolic equivalent of 1 is resting, not exercise.
+        exercise_kcal=(Decimal("1892") / Decimal("24")).quantize(Decimal("0.01")),
+        exercise_minutes=60,
+        weight_kg=Decimal("105.40"),
+        height_cm=Decimal("174.00"),
+        birth_date=date(1974, 9, 11),
+        biological_sex="male",
+        activity_level="moderate",
+        today=TODAY,
+    )
+
+    assert resting_only.exercise_above_resting_kcal == Decimal("0")
+    assert resting_only.total_expenditure_kcal == resting_only.living_kcal
+
+
+def test_a_session_cheaper_than_resting_never_goes_negative() -> None:
+    balance = energy_balance(
+        consumed_kcal=Decimal("2000"),
+        exercise_kcal=Decimal("5.00"),
+        exercise_minutes=120,
+        weight_kg=Decimal("105.40"),
+        height_cm=Decimal("174.00"),
+        birth_date=date(1974, 9, 11),
+        biological_sex="male",
+        activity_level="moderate",
+        today=TODAY,
+    )
+
+    assert balance.exercise_above_resting_kcal == Decimal("0")
 
 
 def test_training_is_not_counted_twice() -> None:
@@ -58,6 +96,7 @@ def test_training_is_not_counted_twice() -> None:
     without_training = energy_balance(
         consumed_kcal=Decimal("2000"),
         exercise_kcal=Decimal("0"),
+        exercise_minutes=0,
         weight_kg=Decimal("80"),
         height_cm=Decimal("178"),
         birth_date=date(1990, 1, 1),
@@ -77,6 +116,7 @@ def test_eating_more_than_spent_is_a_surplus() -> None:
     balance = energy_balance(
         consumed_kcal=Decimal("4000"),
         exercise_kcal=Decimal("0"),
+        exercise_minutes=0,
         weight_kg=Decimal("70"),
         height_cm=Decimal("170"),
         birth_date=date(1990, 1, 1),
@@ -93,6 +133,7 @@ def test_a_missing_height_leaves_the_balance_unanswered() -> None:
     balance = energy_balance(
         consumed_kcal=Decimal("1435"),
         exercise_kcal=Decimal("1059"),
+        exercise_minutes=47,
         weight_kg=Decimal("105.40"),
         height_cm=None,
         birth_date=date(1974, 9, 11),
@@ -112,6 +153,7 @@ def test_a_missing_birth_date_leaves_the_balance_unanswered() -> None:
     balance = energy_balance(
         consumed_kcal=Decimal("1435"),
         exercise_kcal=Decimal("0"),
+        exercise_minutes=0,
         weight_kg=Decimal("105.40"),
         height_cm=Decimal("174"),
         birth_date=None,
@@ -127,6 +169,7 @@ def test_an_unknown_activity_level_falls_back() -> None:
     balance = energy_balance(
         consumed_kcal=Decimal("2000"),
         exercise_kcal=Decimal("0"),
+        exercise_minutes=0,
         weight_kg=Decimal("80"),
         height_cm=Decimal("178"),
         birth_date=date(1990, 1, 1),

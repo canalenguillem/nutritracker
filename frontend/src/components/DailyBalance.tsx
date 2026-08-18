@@ -59,8 +59,8 @@ export const DailyBalance = ({ summary }: DailyBalanceProps) => {
           <dd>−{formatEnergy(summary.livingKcal ?? 0)} kcal</dd>
         </div>
         <div>
-          <dt>Entrenamiento</dt>
-          <dd>−{formatEnergy(summary.exerciseKcal)} kcal</dd>
+          <dt>Entrenamiento, por encima del reposo</dt>
+          <dd>−{formatEnergy(summary.exerciseAboveRestingKcal ?? 0)} kcal</dd>
         </div>
         <div className="balance__rows-total">
           <dt>Gasto total</dt>
@@ -69,9 +69,15 @@ export const DailyBalance = ({ summary }: DailyBalanceProps) => {
       </dl>
 
       <p className="balance__detail">
+        El entrenamiento se cuenta solo por encima del reposo: durante esos minutos tu cuerpo
+        habría gastado algo de todos modos, y la vida diaria ya lo incluye.
+        {summary.exerciseKcal > (summary.exerciseAboveRestingKcal ?? 0)
+          ? ` La sesión costó ${formatEnergy(summary.exerciseKcal)} kcal en total.`
+          : ""}{" "}
         Todo son estimaciones: el reposo sale de una fórmula con tu estatura, peso y edad, y el
-        entrenamiento de una tabla. Un déficit calculado así puede equivocarse en varios cientos
-        de kilocalorías, y no sustituye el consejo de un médico o dietista-nutricionista.
+        gasto del ejercicio de una tabla. Un déficit calculado así puede equivocarse en varios
+        cientos de kilocalorías, y no sustituye el consejo de un médico o
+        dietista-nutricionista.
       </p>
     </div>
   );

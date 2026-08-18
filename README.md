@@ -13,6 +13,9 @@ La Fase 10 incluye, además de todo lo anterior:
 - El factor de actividad diaria excluye los entrenamientos a propósito, porque
   esos se registran uno a uno y se suman aparte. Un factor de manual los
   contaría dos veces.
+- Del entrenamiento solo se suma lo que gasta por encima del reposo: un MET de 1
+  es estar en reposo, así que la cifra de una sesión ya lleva dentro el reposo de
+  esos minutos, y la vida diaria cubre las 24 horas.
 - Mientras falte estatura, peso o fecha de nacimiento, el panel dice que todavía
   no puede decirlo en vez de llamar déficit a la comida menos el ejercicio.
 

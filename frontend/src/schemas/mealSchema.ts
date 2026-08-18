@@ -61,6 +61,7 @@ export const dailySummaryResponseSchema = z
     balance_status: z.enum(["estimated", "needs_profile"]),
     resting_kcal: z.string().nullable(),
     living_kcal: z.string().nullable(),
+    exercise_above_resting_kcal: z.string().nullable(),
     total_expenditure_kcal: z.string().nullable(),
     balance_kcal: z.string().nullable(),
   })

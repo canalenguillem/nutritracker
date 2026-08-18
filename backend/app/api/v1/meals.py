@@ -88,6 +88,7 @@ async def read_daily_summary(
     balance = energy_balance(
         consumed_kcal=summary.totals.kcal,
         exercise_kcal=burned,
+        exercise_minutes=sum(exercise.duration_minutes for exercise in performed),
         weight_kg=profile.current_weight_kg,
         height_cm=profile.height_cm,
         birth_date=profile.birth_date,
@@ -109,6 +110,7 @@ async def read_daily_summary(
         balance_status=balance.status,
         resting_kcal=balance.resting_kcal,
         living_kcal=balance.living_kcal,
+        exercise_above_resting_kcal=balance.exercise_above_resting_kcal,
         total_expenditure_kcal=balance.total_expenditure_kcal,
         balance_kcal=balance.balance_kcal,
     )

@@ -13,10 +13,14 @@ TWO_PLACES = Decimal("0.01")
 MINUTES_PER_HOUR = Decimal("60")
 WHITESPACE = re.compile(r"\s+")
 
-# Metabolic equivalents for the activities people record most often. A value is
-# an average for the activity, which the intensity then adjusts.
+# Metabolic equivalents for the activities people record most often, following
+# the Compendium of Physical Activities. Each value is an average for a whole
+# session at a normal effort, rest between rounds and sets included, which is
+# why the intensity below only nudges it.
 ACTIVITY_METS: tuple[tuple[tuple[str, ...], Decimal], ...] = (
-    (("fitboxing", "boxeo", "boxing", "kickboxing", "muay"), Decimal("9.5")),
+    # A class is bag work in intervals: the Compendium puts a punching bag at
+    # 5.5 and sparring at 7.8, while 12.8 is competitive boxing in a ring.
+    (("fitboxing", "boxeo", "boxing", "kickboxing", "muay"), Decimal("8.0")),
     (("correr", "running", "carrera", "trote", "maraton"), Decimal("9.8")),
     (("caminar", "andar", "walking", "paseo", "senderismo"), Decimal("3.5")),
     (("bicicleta", "ciclismo", "bici", "cycling", "spinning"), Decimal("7.5")),
@@ -39,11 +43,15 @@ class ActivityMet:
     source: MetSource
 
 
+# The table value already describes a normal effort at that activity, so these
+# adjust it rather than scale it. A wider range would compound with a value that
+# is already vigorous: 9.5 times 1.35 lands on competitive boxing for 47 minutes
+# straight, which is not what a class is.
 INTENSITY_FACTORS: dict[ExerciseIntensity, Decimal] = {
-    ExerciseIntensity.LOW: Decimal("0.80"),
+    ExerciseIntensity.LOW: Decimal("0.85"),
     ExerciseIntensity.MODERATE: Decimal("1.00"),
-    ExerciseIntensity.HIGH: Decimal("1.20"),
-    ExerciseIntensity.VERY_HIGH: Decimal("1.35"),
+    ExerciseIntensity.HIGH: Decimal("1.12"),
+    ExerciseIntensity.VERY_HIGH: Decimal("1.22"),
 }
 
 

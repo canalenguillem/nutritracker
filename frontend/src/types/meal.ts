@@ -55,6 +55,8 @@ export interface DailySummary extends Macros {
   readonly balanceStatus: "estimated" | "needs_profile";
   readonly restingKcal: number | null;
   readonly livingKcal: number | null;
+  /** What the training added above resting, which daily living already covers. */
+  readonly exerciseAboveRestingKcal: number | null;
   readonly totalExpenditureKcal: number | null;
   readonly balanceKcal: number | null;
 }
