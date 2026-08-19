@@ -3,6 +3,10 @@ import { Link } from "react-router-dom";
 import { formatEnergy } from "../features/meals/mealLabels";
 import type { DailySummary } from "../types/meal";
 
+/** Nothing spent reads as "0 kcal", never as "−0 kcal". */
+const formatSpent = (kcal: number): string =>
+  kcal === 0 ? "0 kcal" : `−${formatEnergy(kcal)} kcal`;
+
 interface DailyBalanceProps {
   readonly summary: DailySummary;
 }
@@ -25,7 +29,7 @@ export const DailyBalance = ({ summary }: DailyBalanceProps) => {
           </div>
           <div>
             <dt>Ejercicio</dt>
-            <dd>−{formatEnergy(summary.exerciseKcal)} kcal</dd>
+            <dd>{formatSpent(summary.exerciseKcal)}</dd>
           </div>
         </dl>
       </div>
@@ -52,19 +56,19 @@ export const DailyBalance = ({ summary }: DailyBalanceProps) => {
         </div>
         <div>
           <dt>En reposo</dt>
-          <dd>−{formatEnergy(summary.restingKcal ?? 0)} kcal</dd>
+          <dd>{formatSpent(summary.restingKcal ?? 0)}</dd>
         </div>
         <div>
           <dt>Vida diaria, con el reposo dentro</dt>
-          <dd>−{formatEnergy(summary.livingKcal ?? 0)} kcal</dd>
+          <dd>{formatSpent(summary.livingKcal ?? 0)}</dd>
         </div>
         <div>
           <dt>Entrenamiento, por encima del reposo</dt>
-          <dd>−{formatEnergy(summary.exerciseAboveRestingKcal ?? 0)} kcal</dd>
+          <dd>{formatSpent(summary.exerciseAboveRestingKcal ?? 0)}</dd>
         </div>
         <div className="balance__rows-total">
           <dt>Gasto total</dt>
-          <dd>−{formatEnergy(summary.totalExpenditureKcal ?? 0)} kcal</dd>
+          <dd>{formatSpent(summary.totalExpenditureKcal ?? 0)}</dd>
         </div>
       </dl>
 
