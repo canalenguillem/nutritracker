@@ -13,6 +13,7 @@ from app.repositories.daily_logs import SQLAlchemyDailyLogRepository
 from app.repositories.exercises import SQLAlchemyExerciseRepository
 from app.repositories.meals import SQLAlchemyMealRepository
 from app.repositories.refresh_tokens import SQLAlchemyRefreshTokenRepository
+from app.repositories.sleep import SQLAlchemySleepRepository
 from app.repositories.user_profiles import SQLAlchemyUserProfileRepository
 from app.repositories.users import SQLAlchemyUserRepository
 from app.repositories.weights import SQLAlchemyWeightRepository
@@ -28,6 +29,7 @@ from app.services.met_lookup import OpenAIMetLookup
 from app.services.oauth_state import RedisOAuthStateStore
 from app.services.openai_food_analyzer import OpenAIFoodAnalyzer
 from app.services.profiles import ProfileService
+from app.services.sleep import SleepService
 from app.services.users import UserNotFoundError, UserService
 from app.services.weights import WeightService
 
@@ -91,6 +93,13 @@ def get_exercise_service(
 
 
 ExerciseServiceDependency = Annotated[ExerciseService, Depends(get_exercise_service)]
+
+
+def get_sleep_service(session: SessionDependency) -> SleepService:
+    return SleepService(SQLAlchemySleepRepository(session))
+
+
+SleepServiceDependency = Annotated[SleepService, Depends(get_sleep_service)]
 
 
 def get_profile_service(session: SessionDependency) -> ProfileService:

@@ -6,7 +6,17 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 12 incluye, además de todo lo anterior:
+La Fase 13 incluye, además de todo lo anterior:
+
+- Registro de sueño: a qué hora se acostó, a qué hora se levantó, qué tal
+  durmió y notas.
+- La noche se archiva en el día en que termina, que es al que afecta y en el que
+  se mira, no en la tarde en que empezó.
+- Acostarse antes de medianoche se entiende sin preguntar: la noche empieza el
+  día anterior.
+- No se estima nada del sueño. Se guardan las horas tal y como se escriben.
+
+La Fase 12 aportó el histórico:
 
 - El panel deja de estar clavado en hoy: se puede retroceder día a día y ver la
   comida, el ejercicio, el balance y el ayuno de cualquier jornada.

@@ -5,6 +5,7 @@ import { DayPicker } from "../components/DayPicker";
 import { DayStrip } from "../components/DayStrip";
 import { ExerciseCard } from "../components/ExerciseCard";
 import { FastingWindow } from "../components/FastingWindow";
+import { SleptNightCard } from "../components/SleptNightCard";
 import { MacroTotals } from "../components/MacroTotals";
 import { MealCard } from "../components/MealCard";
 import { PageLoader } from "../components/PageLoader";
@@ -89,6 +90,9 @@ export const DashboardPage = () => {
               <Link className="button button--secondary button--small" to="/exercises/new">
                 Añadir ejercicio
               </Link>
+              <Link className="button button--secondary button--small" to="/sleep/new">
+                Añadir sueño
+              </Link>
             </div>
           </div>
           <MacroTotals macros={summary} />
@@ -99,7 +103,10 @@ export const DashboardPage = () => {
 
         <DailyBalance summary={summary} />
 
-        <FastingWindow summary={summary} />
+        <div className="dashboard__rhythm">
+          <FastingWindow summary={summary} />
+          <SleptNightCard day={summary.logDate} isToday={isToday} />
+        </div>
 
         <div className="dashboard__meals">
           <h2>Lo que has comido</h2>

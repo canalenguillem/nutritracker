@@ -5,6 +5,7 @@ import { PrivateLayout } from "../layouts/PrivateLayout";
 import { PublicLayout } from "../layouts/PublicLayout";
 import { AddExercisePage } from "../pages/AddExercisePage";
 import { AddMealPage } from "../pages/AddMealPage";
+import { AddSleepPage } from "../pages/AddSleepPage";
 import { AuthCallbackPage } from "../pages/AuthCallbackPage";
 import { DashboardPage } from "../pages/DashboardPage";
 import { HomePage } from "../pages/HomePage";
@@ -34,6 +35,7 @@ export const AppRouter = () => (
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="meals/new" element={<AddMealPage />} />
         <Route path="exercises/new" element={<AddExercisePage />} />
+        <Route path="sleep/new" element={<AddSleepPage />} />
         <Route path="weight" element={<WeightPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>

@@ -6,11 +6,13 @@ from app.models.enums import (
     MealSource,
     MealStatus,
     MealType,
+    SleepQuality,
     UserRole,
     UserStatus,
 )
 from app.models.exercise import Exercise
 from app.models.meal import DailyLog, Meal, MealItem
+from app.models.sleep import SleepEntry
 from app.models.user import AuthIdentity, RefreshToken, User, UserProfile
 from app.models.weight import WeightEntry
 
@@ -28,6 +30,8 @@ __all__ = [
     "MealStatus",
     "MealType",
     "RefreshToken",
+    "SleepEntry",
+    "SleepQuality",
     "User",
     "UserProfile",
     "UserRole",

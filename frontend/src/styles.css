@@ -2818,3 +2818,108 @@ select.form-field__input {
 .day-strip__hint {
   margin-left: auto;
 }
+
+.dashboard__rhythm {
+  display: grid;
+  gap: 1rem;
+}
+
+.sleep {
+  display: grid;
+  gap: 0.2rem;
+  padding: 1.15rem 1.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1.1rem;
+  background: var(--color-paper);
+}
+
+.sleep--empty {
+  background: var(--color-cream);
+}
+
+.sleep__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sleep__label {
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.sleep__value {
+  margin: 0;
+  color: var(--color-green-dark);
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.sleep__quality {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.sleep__quality--poor,
+.sleep__quality--fair {
+  background: rgb(184 107 40 / 12%);
+  color: var(--color-warning);
+}
+
+.sleep__quality--good,
+.sleep__quality--very_good {
+  background: var(--color-green-light);
+  color: var(--color-green-dark);
+}
+
+.sleep__detail {
+  margin: 0.25rem 0 0;
+  color: var(--color-ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.sleep__detail a {
+  color: var(--color-green-dark);
+  font-weight: 700;
+  text-underline-offset: 0.2rem;
+}
+
+.sleep__notes {
+  margin: 0.3rem 0 0;
+  color: var(--color-ink-soft);
+  font-size: 0.82rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.sleep__remove {
+  justify-self: start;
+  margin-top: 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-error);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+
+@media (min-width: 52rem) {
+  .dashboard__rhythm {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}

@@ -49,3 +49,10 @@ class ExerciseSource(StrEnum):
     MANUAL = "manual"
     DEVICE = "device"
     IMPORTED = "imported"
+
+
+class SleepQuality(StrEnum):
+    POOR = "poor"
+    FAIR = "fair"
+    GOOD = "good"
+    VERY_GOOD = "very_good"
