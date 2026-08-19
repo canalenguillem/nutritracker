@@ -557,3 +557,46 @@ async def test_the_first_meal_ever_leaves_no_fast_to_report(client: AsyncClient)
     body = response.json()
     assert body["fasting_hours"] is None
     assert body["fasting_started_at"] is None
+
+
+async def test_the_history_lines_up_the_last_days(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    await create_meal(client, headers)
+
+    response = await client.get("/api/v1/meals/history", params={"days": 5}, headers=headers)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert len(body) == 5
+    # Oldest first, so a chart or a strip reads left to right.
+    dates = [day["log_date"] for day in body]
+    assert dates == sorted(dates)
+
+
+async def test_a_day_with_nothing_still_appears_in_the_history(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+
+    response = await client.get("/api/v1/meals/history", params={"days": 3}, headers=headers)
+
+    body = response.json()
+    assert len(body) == 3
+    assert all(day["total_kcal"] == "0.00" for day in body)
+    assert all(day["meal_count"] == 0 for day in body)
+
+
+async def test_the_history_is_private(client: AsyncClient) -> None:
+    owner_headers = await sign_up(client, "owner@example.com")
+    await create_meal(client, owner_headers)
+    intruder_headers = await sign_up(client, "intruder@example.com")
+
+    response = await client.get("/api/v1/meals/history", headers=intruder_headers)
+
+    assert all(day["meal_count"] == 0 for day in response.json())
+
+
+async def test_the_history_refuses_an_absurd_span(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+
+    assert (
+        await client.get("/api/v1/meals/history", params={"days": 400}, headers=headers)
+    ).status_code == 422

@@ -1,6 +1,8 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { DailyBalance } from "../components/DailyBalance";
+import { DayPicker } from "../components/DayPicker";
+import { DayStrip } from "../components/DayStrip";
 import { ExerciseCard } from "../components/ExerciseCard";
 import { FastingWindow } from "../components/FastingWindow";
 import { MacroTotals } from "../components/MacroTotals";
@@ -17,7 +19,12 @@ import { useDailySummary, useDayMeals, useDeleteMeal } from "../features/meals/u
 
 export const DashboardPage = () => {
   const { user } = useAuth();
-  const summaryQuery = useDailySummary();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // The day being read lives in the address, so it survives a reload and can
+  // be shared or bookmarked.
+  const requestedDay = searchParams.get("date");
+  const summaryQuery = useDailySummary(requestedDay ?? undefined);
+  const todayQuery = useDailySummary();
   const mealsQuery = useDayMeals(summaryQuery.data?.logDate);
   const exercisesQuery = useDayExercises(summaryQuery.data?.logDate);
   const deleteMeal = useDeleteMeal();
@@ -42,6 +49,11 @@ export const DashboardPage = () => {
   const summary = summaryQuery.data;
   const meals = mealsQuery.data ?? [];
   const exercises = exercisesQuery.data ?? [];
+  const today = todayQuery.data?.logDate ?? summary.logDate;
+  const isToday = summary.logDate === today;
+  const selectDay = (day: string) => {
+    setSearchParams(day === today ? {} : { date: day }, { replace: true });
+  };
 
   return (
     <section className="dashboard">
@@ -51,19 +63,25 @@ export const DashboardPage = () => {
             <span aria-hidden="true">✦</span>
             {formatDay(summary.logDate)}
           </p>
-          <h1>Hola, {user?.displayName}.</h1>
+          <h1>{isToday ? `Hola, ${user?.displayName}.` : "Lo que registraste"}</h1>
           <p>
             {summary.mealCount === 0
-              ? "Todavía no has registrado nada hoy."
-              : `Llevas ${summary.mealCount} ${
+              ? isToday
+                ? "Todavía no has registrado nada hoy."
+                : "Ese día no registraste ninguna comida."
+              : `${summary.mealCount} ${
                   summary.mealCount === 1 ? "registro" : "registros"
-                } hoy.`}
+                }${isToday ? " hoy" : " ese día"}.`}
           </p>
         </div>
 
+        <DayPicker selectedDay={summary.logDate} today={today} onSelect={selectDay} />
+
+        <DayStrip selectedDay={summary.logDate} onSelect={selectDay} />
+
         <article className="dashboard__card">
           <div className="dashboard__card-head">
-            <h2>Resumen de hoy</h2>
+            <h2>{isToday ? "Resumen de hoy" : "Resumen del día"}</h2>
             <div className="dashboard__actions">
               <Link className="button button--primary button--small" to="/meals/new">
                 Añadir comida

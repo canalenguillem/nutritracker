@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
@@ -15,6 +15,7 @@ from app.api.deps import (
 )
 from app.core.errors import ApiError
 from app.models.base import utc_now
+from app.models.user import User, UserProfile
 from app.schemas.analysis import (
     ClarificationQuestionResponse,
     EstimatedItemResponse,
@@ -29,6 +30,7 @@ from app.schemas.meals import (
 )
 from app.services.daily_logs import local_log_date
 from app.services.energy import energy_balance
+from app.services.exercises import ExerciseService
 from app.services.food_analysis import (
     FoodAnalysisDisabledError,
     FoodAnalysisError,
@@ -40,6 +42,7 @@ from app.services.meals import (
     EmptyMealError,
     MealChanges,
     MealNotFoundError,
+    MealService,
     NewMeal,
     NewMealItem,
 )
@@ -71,6 +74,24 @@ async def list_meals(
     return [MealResponse.model_validate(meal) for meal in meals]
 
 
+@router.get("/history", response_model=list[DailySummaryResponse])
+async def read_history(
+    user: CurrentUserDependency,
+    service: MealServiceDependency,
+    exercises: ExerciseServiceDependency,
+    profiles: ProfileServiceDependency,
+    days: Annotated[int, Query(ge=2, le=31)] = 7,
+) -> list[DailySummaryResponse]:
+    """The last few days side by side, oldest first, so they can be compared."""
+    today = local_log_date(utc_now(), user.timezone)
+    profile = await profiles.get_profile(user)
+
+    return [
+        await _summarise(user, today - timedelta(days=offset), service, exercises, profile)
+        for offset in reversed(range(days))
+    ]
+
+
 @router.get("/summary", response_model=DailySummaryResponse)
 async def read_daily_summary(
     user: CurrentUserDependency,
@@ -80,10 +101,19 @@ async def read_daily_summary(
     log_date: LogDateQuery = None,
 ) -> DailySummaryResponse:
     day = log_date if log_date is not None else local_log_date(utc_now(), user.timezone)
+    return await _summarise(user, day, service, exercises, await profiles.get_profile(user))
+
+
+async def _summarise(
+    user: User,
+    day: date,
+    service: MealService,
+    exercises: ExerciseService,
+    profile: UserProfile,
+) -> DailySummaryResponse:
     summary = await service.daily_totals(user, day)
     performed = await exercises.list_exercises(user, day)
     burned = sum((exercise.counted_calories for exercise in performed), Decimal("0.00"))
-    profile = await profiles.get_profile(user)
     fasting = await service.fasting_window(user, day, utc_now())
 
     balance = energy_balance(

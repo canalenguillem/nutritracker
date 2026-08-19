@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import {
   dailySummaryResponseSchema,
   foodEstimateResponseSchema,
@@ -95,6 +97,12 @@ export const getDailySummary = async (day?: string): Promise<DailySummary> => {
   });
 
   return toDailySummary(dailySummaryResponseSchema.parse(response.data));
+};
+
+export const getHistory = async (days: number): Promise<DailySummary[]> => {
+  const response = await httpClient.get<unknown>("/meals/history", { params: { days } });
+
+  return z.array(dailySummaryResponseSchema).parse(response.data).map(toDailySummary);
 };
 
 export const getMeals = async (day: string): Promise<Meal[]> => {

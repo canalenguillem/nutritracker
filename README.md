@@ -6,7 +6,16 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 11 incluye, además de todo lo anterior:
+La Fase 12 incluye, además de todo lo anterior:
+
+- El panel deja de estar clavado en hoy: se puede retroceder día a día y ver la
+  comida, el ejercicio, el balance y el ayuno de cualquier jornada.
+- El día que se está mirando va en la dirección, así que sobrevive a una recarga
+  y se puede compartir o guardar como marcador.
+- Tira de los últimos siete días con la comida y el ejercicio de cada uno, para
+  compararlos de un vistazo y saltar a cualquiera.
+
+La Fase 11 aportó el ayuno:
 
 - Tiempo de ayuno, medido como el hueco entre la última comida y la primera del
   día siguiente. No se registra a mano: ese dato ya lo describen las horas de

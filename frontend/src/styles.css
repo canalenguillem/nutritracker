@@ -2641,3 +2641,180 @@ select.form-field__input {
   text-decoration: underline;
   text-underline-offset: 0.25rem;
 }
+
+.day-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 0.9rem;
+}
+
+.day-picker__step {
+  display: inline-flex;
+  width: 2.4rem;
+  height: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  background: var(--color-paper);
+  color: var(--color-green-dark);
+  cursor: pointer;
+}
+
+.day-picker__step:hover:not(:disabled) {
+  border-color: var(--color-green);
+}
+
+.day-picker__step:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.day-picker__step svg {
+  width: 1.05rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.day-picker__label {
+  margin: 0;
+  min-width: 9rem;
+  color: var(--color-green-dark);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.day-picker__today {
+  border: none;
+  background: none;
+  color: var(--color-green-dark);
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}
+
+.day-strip {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.15rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1.1rem;
+  background: var(--color-paper);
+}
+
+.day-strip h2 {
+  margin: 0;
+  color: var(--color-green-dark);
+  font-size: 0.95rem;
+}
+
+.day-strip__list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(7, 1fr);
+  list-style: none;
+}
+
+.day-strip__day {
+  display: grid;
+  width: 100%;
+  gap: 0.15rem;
+  padding: 0.4rem 0.15rem;
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  background: none;
+  cursor: pointer;
+  justify-items: center;
+}
+
+.day-strip__day:hover {
+  background: var(--color-cream);
+}
+
+.day-strip__day--current {
+  border-color: var(--color-green);
+  background: var(--color-green-light);
+}
+
+.day-strip__bars {
+  display: flex;
+  height: 3.2rem;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+}
+
+.day-strip__bar {
+  width: 0.4rem;
+  min-height: 2px;
+  border-radius: 999px 999px 0 0;
+}
+
+.day-strip__bar--food {
+  background: var(--color-green);
+}
+
+.day-strip__bar--exercise {
+  background: var(--color-coral);
+}
+
+.day-strip__weekday {
+  color: var(--color-ink-soft);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.day-strip__number {
+  color: var(--color-ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.day-strip__kcal {
+  color: var(--color-ink-soft);
+  font-size: 0.66rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.day-strip__key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-size: 0.74rem;
+}
+
+.day-strip__key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.day-strip__key-item::before {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  content: "";
+}
+
+.day-strip__key-item--food::before {
+  background: var(--color-green);
+}
+
+.day-strip__key-item--exercise::before {
+  background: var(--color-coral);
+}
+
+.day-strip__hint {
+  margin-left: auto;
+}

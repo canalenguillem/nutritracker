@@ -19,7 +19,12 @@ export const ExerciseCard = ({ exercise, onDelete, isDeleting }: ExerciseCardPro
         </p>
       </div>
       <div className="meal-card__energy">
-        <strong>−{formatEnergy(exercise.countedCalories)}</strong>
+        {/* Nothing spent reads as "0", never as "−0". */}
+        <strong>
+          {exercise.countedCalories === 0
+            ? "0"
+            : `−${formatEnergy(exercise.countedCalories)}`}
+        </strong>
         <span>kcal</span>
       </div>
     </header>
