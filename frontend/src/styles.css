@@ -2611,3 +2611,33 @@ select.form-field__input {
   font-size: 0.82rem;
   line-height: 1.5;
 }
+
+.recent__added {
+  margin: 0.35rem 0 0;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid rgb(29 88 72 / 22%);
+  border-radius: 0.7rem;
+  background: var(--color-green-light);
+  color: var(--color-green-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.add-meal__items-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+}
+
+.add-meal__clear {
+  border: none;
+  background: none;
+  color: var(--color-error);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}

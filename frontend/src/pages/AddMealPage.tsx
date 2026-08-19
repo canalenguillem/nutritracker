@@ -62,6 +62,8 @@ export const AddMealPage = () => {
   const [description, setDescription] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [addedNotice, setAddedNotice] = useState<string | null>(null);
+  const itemsRef = useRef<HTMLDivElement>(null);
   const [isPreparingPhoto, setIsPreparingPhoto] = useState(false);
   const cameraInput = useRef<HTMLInputElement>(null);
   const galleryInput = useRef<HTMLInputElement>(null);
@@ -92,12 +94,25 @@ export const AddMealPage = () => {
   const { fields, append, remove, replace } = useFieldArray({ control, name: "items" });
 
   /** Add to what is already there, dropping the blank row the form starts with. */
-  const addItems = (incoming: MealItemFormValues[]) => {
+  const addItems = (incoming: MealItemFormValues[], label: string) => {
     const filled = getValues("items").filter(
       (item) => item.name.trim().length > 0 || item.kcal.trim().length > 0,
     );
     replace([...filled, ...incoming]);
+    setAddedNotice(label);
   };
+
+  // The foods land below the fold, so without this nothing appears to happen
+  // and the same dish gets added again and again.
+  useEffect(() => {
+    if (addedNotice === null) {
+      return;
+    }
+
+    const added = itemsRef.current?.querySelector(".meal-item-fields:last-of-type");
+    const prefersStill = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    added?.scrollIntoView({ behavior: prefersStill ? "auto" : "smooth", block: "center" });
+  }, [addedNotice, fields.length]);
 
   // Pick the draft back up after the browser rebuilt the page.
   useEffect(() => {
@@ -196,7 +211,7 @@ export const AddMealPage = () => {
     try {
       const result = await describeMeal.mutateAsync({ description, photo });
       setEstimates((current) => [...current, result]);
-      addItems(toFormItems(result));
+      addItems(toFormItems(result), result.summary || "Estimación añadida");
       // Clear the box so the next food can be described straight away.
       setDescription("");
       clearPhoto();
@@ -216,6 +231,7 @@ export const AddMealPage = () => {
         fat_g: toFieldValue(item.fatG),
         carbohydrates_g: toFieldValue(item.carbohydratesG),
       })),
+      meal.items.map((item) => item.name).join(" + "),
     );
   };
 
@@ -362,7 +378,11 @@ export const AddMealPage = () => {
           <EstimatePanel key={`${entry.summary}-${index}`} estimate={entry} />
         ))}
 
-        <RecentMeals onPick={onPickRecent} disabled={describeMeal.isPending} />
+        <RecentMeals
+          onPick={onPickRecent}
+          disabled={describeMeal.isPending}
+          addedNotice={addedNotice}
+        />
 
         <form className="add-meal__form" onSubmit={(event) => void onSubmit(event)} noValidate>
           {submissionError ? (
@@ -394,16 +414,31 @@ export const AddMealPage = () => {
             />
           </div>
 
-          <div className="add-meal__items">
+          <div className="add-meal__items" ref={itemsRef}>
             <div className="add-meal__items-head">
-              <h2>Alimentos</h2>
-              <button
-                className="button button--secondary button--small"
-                type="button"
-                onClick={() => append(EMPTY_ITEM)}
-              >
-                Añadir alimento
-              </button>
+              <h2>Alimentos ({fields.length})</h2>
+              <div className="add-meal__items-actions">
+                <button
+                  className="button button--secondary button--small"
+                  type="button"
+                  onClick={() => append(EMPTY_ITEM)}
+                >
+                  Añadir alimento
+                </button>
+                {fields.length > 1 ? (
+                  <button
+                    className="add-meal__clear"
+                    type="button"
+                    onClick={() => {
+                      replace([EMPTY_ITEM]);
+                      setEstimates([]);
+                      setAddedNotice(null);
+                    }}
+                  >
+                    Vaciar la lista
+                  </button>
+                ) : null}
+              </div>
             </div>
 
             {fields.map((field, index) => (

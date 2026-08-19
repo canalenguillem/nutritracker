@@ -7,9 +7,11 @@ import type { Meal } from "../types/meal";
 interface RecentMealsProps {
   readonly onPick: (meal: Meal) => void;
   readonly disabled: boolean;
+  /** What was last added to the form, so the click has a visible answer. */
+  readonly addedNotice: string | null;
 }
 
-export const RecentMeals = ({ onPick, disabled }: RecentMealsProps) => {
+export const RecentMeals = ({ onPick, disabled, addedNotice }: RecentMealsProps) => {
   const [query, setQuery] = useState("");
   const recentMeals = useRecentMeals(query);
   const meals = recentMeals.data ?? [];
@@ -30,6 +32,12 @@ export const RecentMeals = ({ onPick, disabled }: RecentMealsProps) => {
         placeholder="mascarpone"
         onChange={(event) => setQuery(event.target.value)}
       />
+
+      {addedNotice ? (
+        <p className="recent__added" role="status">
+          Añadido al formulario: {addedNotice}. Ya está más abajo, en Alimentos.
+        </p>
+      ) : null}
 
       {recentMeals.isPending ? <p className="recent__empty">Buscando…</p> : null}
 
