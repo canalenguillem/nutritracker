@@ -53,14 +53,19 @@ export const SleptNightCard = ({ day, isToday }: SleptNightCardProps) => {
 
       {slept.notes ? <p className="sleep__notes">{slept.notes}</p> : null}
 
-      <button
-        className="sleep__remove"
-        type="button"
-        onClick={() => deleteNight.mutate(slept.id)}
-        disabled={deleteNight.isPending}
-      >
-        {deleteNight.isPending ? "Borrando…" : "Borrar"}
-      </button>
+      <div className="sleep__actions">
+        <Link className="meal-card__edit" to={`/sleep/${slept.id}/edit`}>
+          Editar
+        </Link>
+        <button
+          className="sleep__remove"
+          type="button"
+          onClick={() => deleteNight.mutate(slept.id)}
+          disabled={deleteNight.isPending}
+        >
+          {deleteNight.isPending ? "Borrando…" : "Borrar"}
+        </button>
+      </div>
     </div>
   );
 };

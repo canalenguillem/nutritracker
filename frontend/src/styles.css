@@ -2923,3 +2923,26 @@ select.form-field__input {
     align-items: start;
   }
 }
+
+.meal-card__actions,
+.sleep__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.sleep__actions {
+  margin-top: 0.5rem;
+}
+
+.meal-card__edit {
+  color: var(--color-green-dark);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}
+
+.sleep__actions .sleep__remove {
+  margin-top: 0;
+}

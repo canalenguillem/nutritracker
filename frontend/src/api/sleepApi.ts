@@ -44,6 +44,32 @@ export const createNight = async (values: SleepFormValues): Promise<SleptNight> 
   return toNight(sleptNightResponseSchema.parse(response.data));
 };
 
+export const getNightById = async (entryId: string): Promise<SleptNight> => {
+  const response = await httpClient.get<unknown>(`/sleep/${entryId}`);
+
+  return toNight(sleptNightResponseSchema.parse(response.data));
+};
+
+export const updateNight = async ({
+  entryId,
+  values,
+}: {
+  readonly entryId: string;
+  readonly values: SleepFormValues;
+}): Promise<SleptNight> => {
+  const wentToBedToday = values.bedTime < values.wakeTime;
+  const bedDay = wentToBedToday ? values.day : previousDay(values.day);
+
+  const response = await httpClient.patch<unknown>(`/sleep/${entryId}`, {
+    started_at: toInstant(bedDay, values.bedTime),
+    ended_at: toInstant(values.day, values.wakeTime),
+    quality: values.quality === "" ? null : values.quality,
+    notes: values.notes.trim() || null,
+  });
+
+  return toNight(sleptNightResponseSchema.parse(response.data));
+};
+
 export const deleteNight = async (entryId: string): Promise<void> => {
   await httpClient.delete(`/sleep/${entryId}`);
 };

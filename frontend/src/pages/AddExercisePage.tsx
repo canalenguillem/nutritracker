@@ -1,11 +1,16 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { FormField } from "../components/FormField";
+import { PageLoader } from "../components/PageLoader";
 import { intensityOptions } from "../features/exercises/exerciseLabels";
-import { useCreateExercise } from "../features/exercises/useExercises";
+import {
+  useCreateExercise,
+  useExercise,
+  useUpdateExercise,
+} from "../features/exercises/useExercises";
 import { getMealErrorMessage } from "../features/meals/mealErrors";
 import { useProfile } from "../features/weight/useWeight";
 import { formatKilos } from "../features/weight/weightLabels";
@@ -21,7 +26,11 @@ const timeValue = (now: Date): string => `${pad(now.getHours())}:${pad(now.getMi
 
 export const AddExercisePage = () => {
   const navigate = useNavigate();
+  const { exerciseId } = useParams();
+  const isEditing = Boolean(exerciseId);
+  const existing = useExercise(exerciseId);
   const createExercise = useCreateExercise();
+  const updateExercise = useUpdateExercise();
   const profile = useProfile();
   const knownWeightKg = profile.data?.currentWeightKg ?? null;
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -30,6 +39,7 @@ export const AddExercisePage = () => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ExerciseFormValues>({
     resolver: zodResolver(exerciseFormSchema),
@@ -49,12 +59,45 @@ export const AddExercisePage = () => {
     setSubmissionError(null);
 
     try {
-      await createExercise.mutateAsync(values);
+      if (exerciseId) {
+        await updateExercise.mutateAsync({ exerciseId, values });
+      } else {
+        await createExercise.mutateAsync(values);
+      }
       navigate("/dashboard", { replace: true });
     } catch (error) {
       setSubmissionError(getMealErrorMessage(error));
     }
   });
+
+  // Fill the form from the session being corrected.
+  useEffect(() => {
+    const exercise = existing.data;
+    if (!exercise) {
+      return;
+    }
+
+    const performedAt = new Date(exercise.performedAt);
+    const pad2 = (value: number): string => String(value).padStart(2, "0");
+
+    reset({
+      activityName: exercise.activityName,
+      durationMinutes: String(exercise.durationMinutes),
+      intensity: exercise.intensity,
+      day: `${performedAt.getFullYear()}-${pad2(performedAt.getMonth() + 1)}-${pad2(
+        performedAt.getDate(),
+      )}`,
+      time: `${pad2(performedAt.getHours())}:${pad2(performedAt.getMinutes())}`,
+      confirmedCalories:
+        exercise.confirmedCalories === null ? "" : String(exercise.confirmedCalories),
+      weightKg: "",
+      notes: exercise.notes ?? "",
+    });
+  }, [existing.data, reset]);
+
+  if (isEditing && existing.isPending) {
+    return <PageLoader message="Cargando la sesión…" />;
+  }
 
   return (
     <section className="add-meal">
@@ -62,9 +105,9 @@ export const AddExercisePage = () => {
         <div className="add-meal__heading">
           <p className="eyebrow">
             <span aria-hidden="true">✦</span>
-            Actividad
+            {isEditing ? "Corregir" : "Actividad"}
           </p>
-          <h1>Añade ejercicio</h1>
+          <h1>{isEditing ? "Edita la sesión" : "Añade ejercicio"}</h1>
           <p>
             Anota qué has hecho y cuánto ha durado. Estimamos el gasto, pero si tu reloj o la
             máquina te dan otra cifra, la tuya manda.
@@ -173,7 +216,7 @@ export const AddExercisePage = () => {
 
           <div className="add-meal__actions">
             <button className="button button--primary" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Guardando…" : "Guardar ejercicio"}
+              {isSubmitting ? "Guardando…" : isEditing ? "Guardar cambios" : "Guardar ejercicio"}
             </button>
             <Link className="text-link" to="/dashboard">
               Cancelar

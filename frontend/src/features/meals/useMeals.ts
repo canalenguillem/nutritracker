@@ -7,7 +7,9 @@ import {
   getDailySummary,
   getHistory,
   getMeals,
+  getMeal,
   getRecentMeals,
+  updateMeal,
 } from "../../api/mealsApi";
 
 export const mealKeys = {
@@ -15,6 +17,7 @@ export const mealKeys = {
   day: (day: string) => ["meals", "day", day] as const,
   recent: (query: string) => ["meals", "recent", query] as const,
   history: (days: number) => ["meals", "history", days] as const,
+  one: (mealId: string) => ["meals", "one", mealId] as const,
 };
 
 /** Without a date the API answers for today in the account's own timezone. */
@@ -66,3 +69,16 @@ export const useRecentMeals = (query: string) =>
 
 export const useHistory = (days: number) =>
   useQuery({ queryKey: mealKeys.history(days), queryFn: () => getHistory(days) });
+
+export const useMeal = (mealId: string | undefined) =>
+  useQuery({
+    queryKey: mealKeys.one(mealId ?? ""),
+    queryFn: () => getMeal(mealId as string),
+    enabled: Boolean(mealId),
+  });
+
+export const useUpdateMeal = () => {
+  const resetMealCache = useMealCacheReset();
+
+  return useMutation({ mutationFn: updateMeal, onSuccess: resetMealCache });
+};

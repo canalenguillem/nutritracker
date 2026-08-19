@@ -14,6 +14,13 @@ class SleepCreateRequest(BaseModel):
     notes: str | None = Field(default=None, max_length=2000)
 
 
+class SleepUpdateRequest(BaseModel):
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
+    quality: SleepQuality | None = None
+    notes: str | None = Field(default=None, max_length=2000)
+
+
 class SleepEntryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

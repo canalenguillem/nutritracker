@@ -34,8 +34,11 @@ export const AppRouter = () => (
       <Route element={<PrivateLayout />}>
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="meals/new" element={<AddMealPage />} />
+        <Route path="meals/:mealId/edit" element={<AddMealPage />} />
         <Route path="exercises/new" element={<AddExercisePage />} />
+        <Route path="exercises/:exerciseId/edit" element={<AddExercisePage />} />
         <Route path="sleep/new" element={<AddSleepPage />} />
+        <Route path="sleep/:entryId/edit" element={<AddSleepPage />} />
         <Route path="weight" element={<WeightPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>

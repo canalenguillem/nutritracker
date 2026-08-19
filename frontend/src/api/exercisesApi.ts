@@ -46,6 +46,31 @@ export const createExercise = async (values: ExerciseFormValues): Promise<Exerci
   return toExercise(exerciseResponseSchema.parse(response.data));
 };
 
+export const getExercise = async (exerciseId: string): Promise<Exercise> => {
+  const response = await httpClient.get<unknown>(`/exercises/${exerciseId}`);
+
+  return toExercise(exerciseResponseSchema.parse(response.data));
+};
+
+export const updateExercise = async ({
+  exerciseId,
+  values,
+}: {
+  readonly exerciseId: string;
+  readonly values: ExerciseFormValues;
+}): Promise<Exercise> => {
+  const response = await httpClient.patch<unknown>(`/exercises/${exerciseId}`, {
+    activity_name: values.activityName.trim(),
+    duration_minutes: Math.round(parseAmount(values.durationMinutes)),
+    intensity: values.intensity,
+    performed_at: toInstant(values.day, values.time),
+    confirmed_calories: optionalAmount(values.confirmedCalories),
+    notes: values.notes.trim() || null,
+  });
+
+  return toExercise(exerciseResponseSchema.parse(response.data));
+};
+
 export const deleteExercise = async (exerciseId: string): Promise<void> => {
   await httpClient.delete(`/exercises/${exerciseId}`);
 };

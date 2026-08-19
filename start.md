@@ -1,9 +1,9 @@
 # Implementation status
 
 The project is implemented sequentially according to the phases requested by the
-product owner. Phase 13 is complete: sleep is recorded and shown beside the
-fasting window on the day it ended. Running the food estimator against OpenAI
-requires a key in `.env`.
+product owner. Phase 14 is complete: meals, exercise sessions and nights can all
+be corrected after the fact, from the card that shows them. Running the food
+estimator against OpenAI requires a key in `.env`.
 
 Run the development application with:
 

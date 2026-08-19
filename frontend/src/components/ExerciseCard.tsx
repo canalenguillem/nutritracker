@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { formatDuration, getIntensityLabel } from "../features/exercises/exerciseLabels";
 import { formatEnergy, formatTime } from "../features/meals/mealLabels";
 import type { Exercise } from "../types/exercise";
@@ -39,14 +41,19 @@ export const ExerciseCard = ({ exercise, onDelete, isDeleting }: ExerciseCardPro
             ? "Gasto estimado"
             : "Sin estimar: falta tu peso"}
       </p>
-      <button
-        className="meal-card__delete"
-        type="button"
-        onClick={() => onDelete(exercise.id)}
-        disabled={isDeleting}
-      >
-        {isDeleting ? "Borrando…" : "Borrar"}
-      </button>
+      <div className="meal-card__actions">
+        <Link className="meal-card__edit" to={`/exercises/${exercise.id}/edit`}>
+          Editar
+        </Link>
+        <button
+          className="meal-card__delete"
+          type="button"
+          onClick={() => onDelete(exercise.id)}
+          disabled={isDeleting}
+        >
+          {isDeleting ? "Borrando…" : "Borrar"}
+        </button>
+      </div>
     </footer>
   </article>
 );

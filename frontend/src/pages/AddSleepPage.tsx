@@ -1,12 +1,13 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { FormField } from "../components/FormField";
+import { PageLoader } from "../components/PageLoader";
 import { getMealErrorMessage } from "../features/meals/mealErrors";
 import { qualityOptions } from "../features/sleep/sleepLabels";
-import { useRecordNight } from "../features/sleep/useSleep";
+import { useNightById, useRecordNight, useUpdateNight } from "../features/sleep/useSleep";
 import { sleepFormSchema } from "../schemas/sleepSchema";
 import type { SleepFormValues } from "../types/sleep";
 
@@ -17,13 +18,18 @@ const todayValue = (now: Date): string =>
 
 export const AddSleepPage = () => {
   const navigate = useNavigate();
+  const { entryId } = useParams();
+  const isEditing = Boolean(entryId);
+  const existing = useNightById(entryId);
   const recordNight = useRecordNight();
+  const updateNight = useUpdateNight();
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [now] = useState(() => new Date());
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<SleepFormValues>({
     resolver: zodResolver(sleepFormSchema),
@@ -40,12 +46,40 @@ export const AddSleepPage = () => {
     setSubmissionError(null);
 
     try {
-      await recordNight.mutateAsync(values);
+      if (entryId) {
+        await updateNight.mutateAsync({ entryId, values });
+      } else {
+        await recordNight.mutateAsync(values);
+      }
       navigate("/dashboard", { replace: true });
     } catch (error) {
       setSubmissionError(getMealErrorMessage(error));
     }
   });
+
+  // Fill the form from the night being corrected.
+  useEffect(() => {
+    const night = existing.data;
+    if (!night) {
+      return;
+    }
+
+    const started = new Date(night.startedAt);
+    const ended = new Date(night.endedAt);
+    const pad2 = (value: number): string => String(value).padStart(2, "0");
+
+    reset({
+      day: `${ended.getFullYear()}-${pad2(ended.getMonth() + 1)}-${pad2(ended.getDate())}`,
+      bedTime: `${pad2(started.getHours())}:${pad2(started.getMinutes())}`,
+      wakeTime: `${pad2(ended.getHours())}:${pad2(ended.getMinutes())}`,
+      quality: night.quality ?? "",
+      notes: night.notes ?? "",
+    });
+  }, [existing.data, reset]);
+
+  if (isEditing && existing.isPending) {
+    return <PageLoader message="Cargando la noche…" />;
+  }
 
   return (
     <section className="add-meal">
@@ -53,9 +87,9 @@ export const AddSleepPage = () => {
         <div className="add-meal__heading">
           <p className="eyebrow">
             <span aria-hidden="true">✦</span>
-            Descanso
+            {isEditing ? "Corregir" : "Descanso"}
           </p>
-          <h1>Añade tu sueño</h1>
+          <h1>{isEditing ? "Edita la noche" : "Añade tu sueño"}</h1>
           <p>
             Apunta a qué hora te acostaste y a qué hora te levantaste. La noche se guarda en el
             día en que te despiertas, que es al que afecta.
@@ -129,7 +163,7 @@ export const AddSleepPage = () => {
 
           <div className="add-meal__actions">
             <button className="button button--primary" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Guardando…" : "Guardar sueño"}
+              {isSubmitting ? "Guardando…" : isEditing ? "Guardar cambios" : "Guardar sueño"}
             </button>
             <Link className="text-link" to="/dashboard">
               Cancelar

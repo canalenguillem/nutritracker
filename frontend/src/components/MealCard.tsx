@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import {
   formatEnergy,
   formatGrams,
@@ -55,14 +57,19 @@ export const MealCard = ({ meal, onDelete, isDeleting }: MealCardProps) => (
         P {formatGrams(meal.proteinG)} g · C {formatGrams(meal.carbohydratesG)} g · G{" "}
         {formatGrams(meal.fatG)} g
       </p>
-      <button
-        className="meal-card__delete"
-        type="button"
-        onClick={() => onDelete(meal.id)}
-        disabled={isDeleting}
-      >
-        {isDeleting ? "Borrando…" : "Borrar"}
-      </button>
+      <div className="meal-card__actions">
+        <Link className="meal-card__edit" to={`/meals/${meal.id}/edit`}>
+          Editar
+        </Link>
+        <button
+          className="meal-card__delete"
+          type="button"
+          onClick={() => onDelete(meal.id)}
+          disabled={isDeleting}
+        >
+          {isDeleting ? "Borrando…" : "Borrar"}
+        </button>
+      </div>
     </footer>
   </article>
 );

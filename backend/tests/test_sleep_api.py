@@ -143,3 +143,64 @@ async def test_another_account_cannot_remove_a_night(client: AsyncClient) -> Non
 
 async def test_sleep_requires_authentication(client: AsyncClient) -> None:
     assert (await client.get("/api/v1/sleep")).status_code == 401
+
+
+async def test_a_night_can_be_corrected(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    night = await sleep(client, headers, quality="poor")
+
+    response = await client.patch(
+        f"/api/v1/sleep/{night['id']}",
+        json={"ended_at": "2026-08-19T09:00:00+02:00", "quality": "good"},
+        headers=headers,
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["hours"] == "9.50"
+    assert body["quality"] == "good"
+    # What was not touched stays as it was.
+    assert body["started_at"] == "2026-08-18T21:30:00Z"
+
+
+async def test_a_correction_that_makes_no_sense_is_refused(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    night = await sleep(client, headers)
+
+    response = await client.patch(
+        f"/api/v1/sleep/{night['id']}",
+        json={"ended_at": "2026-08-18T20:00:00+02:00"},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+    # And the stored night is untouched.
+    stored = await client.get(f"/api/v1/sleep/{night['id']}", headers=headers)
+    assert stored.json()["hours"] == "7.50"
+
+
+async def test_clearing_the_quality_needs_saying_so(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+    night = await sleep(client, headers, quality="good")
+
+    untouched = await client.patch(
+        f"/api/v1/sleep/{night['id']}", json={"notes": "otra cosa"}, headers=headers
+    )
+    assert untouched.json()["quality"] == "good"
+
+    cleared = await client.patch(
+        f"/api/v1/sleep/{night['id']}", json={"quality": None}, headers=headers
+    )
+    assert cleared.json()["quality"] is None
+
+
+async def test_another_account_cannot_correct_a_night(client: AsyncClient) -> None:
+    owner_headers = await sign_up(client, "owner@example.com")
+    night = await sleep(client, owner_headers)
+    intruder_headers = await sign_up(client, "intruder@example.com")
+
+    response = await client.patch(
+        f"/api/v1/sleep/{night['id']}", json={"quality": "poor"}, headers=intruder_headers
+    )
+
+    assert response.status_code == 404

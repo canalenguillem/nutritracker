@@ -130,6 +130,37 @@ export const createMeal = async (values: MealFormValues): Promise<Meal> => {
   return toMeal(mealResponseSchema.parse(response.data));
 };
 
+export const getMeal = async (mealId: string): Promise<Meal> => {
+  const response = await httpClient.get<unknown>(`/meals/${mealId}`);
+
+  return toMeal(mealResponseSchema.parse(response.data));
+};
+
+export const updateMeal = async ({
+  mealId,
+  values,
+}: {
+  readonly mealId: string;
+  readonly values: MealFormValues;
+}): Promise<Meal> => {
+  const response = await httpClient.patch<unknown>(`/meals/${mealId}`, {
+    meal_type: values.mealType,
+    eaten_at: toInstant(values.day, values.time),
+    notes: values.notes.trim() || null,
+    items: values.items.map((item) => ({
+      name: item.name.trim(),
+      quantity: toAmount(item.quantity),
+      unit: item.unit.trim(),
+      kcal: toAmount(item.kcal),
+      protein_g: toAmount(item.protein_g),
+      fat_g: toAmount(item.fat_g),
+      carbohydrates_g: toAmount(item.carbohydrates_g),
+    })),
+  });
+
+  return toMeal(mealResponseSchema.parse(response.data));
+};
+
 export const deleteMeal = async (mealId: string): Promise<void> => {
   await httpClient.delete(`/meals/${mealId}`);
 };

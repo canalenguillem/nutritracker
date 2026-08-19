@@ -6,7 +6,19 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 13 incluye, además de todo lo anterior:
+La Fase 14 incluye, además de todo lo anterior:
+
+- Se puede corregir lo registrado: comidas, sesiones de ejercicio y noches.
+  Cada tarjeta del diario lleva su enlace de edición.
+- El formulario de alta hace de editor con los datos ya rellenados, así que no
+  hay dos pantallas que puedan divergir.
+- Al corregir una comida desaparecen el estimador y la lista de repeticiones:
+  esas herramientas añaden alimentos, que no es lo que busca quien viene a
+  arreglar una equivocación.
+- Editar una comida no toca el borrador del navegador, que pertenece a la
+  comida que se está escribiendo.
+
+La Fase 13 aportó el sueño:
 
 - Registro de sueño: a qué hora se acostó, a qué hora se levantó, qué tal
   durmió y notas.

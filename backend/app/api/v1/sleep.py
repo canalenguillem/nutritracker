@@ -7,11 +7,18 @@ from fastapi import APIRouter, HTTPException, Query, status
 from app.api.deps import CurrentUserDependency, SleepServiceDependency
 from app.core.errors import ApiError
 from app.models.base import utc_now
-from app.schemas.sleep import SleepCreateRequest, SleepEntryResponse, SleptNightResponse
+from app.models.sleep import SleepEntry
+from app.schemas.sleep import (
+    SleepCreateRequest,
+    SleepEntryResponse,
+    SleepUpdateRequest,
+    SleptNightResponse,
+)
 from app.services.daily_logs import local_log_date
 from app.services.sleep import (
     ImpossibleNightError,
     NewSleepEntry,
+    SleepChanges,
     SleepEntryNotFoundError,
     hours_of,
 )
@@ -33,9 +40,7 @@ async def read_night(
     if night is None:
         return None
 
-    return SleptNightResponse(
-        **SleepEntryResponse.model_validate(night.entry).model_dump(), hours=night.hours
-    )
+    return _to_response(night.entry)
 
 
 @router.post("", response_model=SleptNightResponse, status_code=status.HTTP_201_CREATED)
@@ -55,15 +60,52 @@ async def create_night(
             ),
         )
     except ImpossibleNightError as error:
-        raise ApiError(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            code="VALIDATION_ERROR",
-            detail=str(error),
-        ) from error
+        raise _impossible(error) from error
 
-    return SleptNightResponse(
-        **SleepEntryResponse.model_validate(entry).model_dump(), hours=hours_of(entry)
-    )
+    return _to_response(entry)
+
+
+@router.get("/{entry_id}", response_model=SleptNightResponse)
+async def read_entry(
+    entry_id: UUID,
+    user: CurrentUserDependency,
+    service: SleepServiceDependency,
+) -> SleptNightResponse:
+    try:
+        entry = await service.get_entry(user, entry_id)
+    except SleepEntryNotFoundError as error:
+        raise _not_found() from error
+
+    return _to_response(entry)
+
+
+@router.patch("/{entry_id}", response_model=SleptNightResponse)
+async def update_entry(
+    entry_id: UUID,
+    payload: SleepUpdateRequest,
+    user: CurrentUserDependency,
+    service: SleepServiceDependency,
+) -> SleptNightResponse:
+    provided = payload.model_fields_set
+    try:
+        entry = await service.update_entry(
+            user,
+            entry_id,
+            SleepChanges(
+                started_at=payload.started_at,
+                ended_at=payload.ended_at,
+                quality=payload.quality,
+                quality_provided="quality" in provided,
+                notes=payload.notes,
+                notes_provided="notes" in provided,
+            ),
+        )
+    except SleepEntryNotFoundError as error:
+        raise _not_found() from error
+    except ImpossibleNightError as error:
+        raise _impossible(error) from error
+
+    return _to_response(entry)
 
 
 @router.delete("/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -75,6 +117,22 @@ async def delete_night(
     try:
         await service.delete_entry(user, entry_id)
     except SleepEntryNotFoundError as error:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="This night does not exist."
-        ) from error
+        raise _not_found() from error
+
+
+def _to_response(entry: SleepEntry) -> SleptNightResponse:
+    return SleptNightResponse(
+        **SleepEntryResponse.model_validate(entry).model_dump(), hours=hours_of(entry)
+    )
+
+
+def _not_found() -> HTTPException:
+    return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This night does not exist.")
+
+
+def _impossible(error: ImpossibleNightError) -> ApiError:
+    return ApiError(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        code="VALIDATION_ERROR",
+        detail=str(error),
+    )

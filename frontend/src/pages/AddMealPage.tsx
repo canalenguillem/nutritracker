@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import { EstimatePanel } from "../components/EstimatePanel";
 import { FormField } from "../components/FormField";
+import { PageLoader } from "../components/PageLoader";
 import { RecentMeals } from "../components/RecentMeals";
 import { mealTypeOptions } from "../features/meals/mealLabels";
 import { getMealErrorMessage } from "../features/meals/mealErrors";
@@ -17,7 +18,12 @@ import {
   saveDraft,
 } from "../features/meals/mealDraft";
 import { formatFileSize, preparePhoto } from "../features/meals/photoPreparation";
-import { useCreateMeal, useDescribeMeal } from "../features/meals/useMeals";
+import {
+  useCreateMeal,
+  useDescribeMeal,
+  useMeal,
+  useUpdateMeal,
+} from "../features/meals/useMeals";
 import { mealFormSchema } from "../schemas/mealSchema";
 import type { FoodEstimate, Meal, MealFormValues, MealItemFormValues } from "../types/meal";
 
@@ -54,7 +60,11 @@ const timeValue = (now: Date): string => `${pad(now.getHours())}:${pad(now.getMi
 
 export const AddMealPage = () => {
   const navigate = useNavigate();
+  const { mealId } = useParams();
+  const isEditing = Boolean(mealId);
+  const existingMeal = useMeal(mealId);
   const createMeal = useCreateMeal();
+  const updateMeal = useUpdateMeal();
   const describeMeal = useDescribeMeal();
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [estimateError, setEstimateError] = useState<string | null>(null);
@@ -67,7 +77,7 @@ export const AddMealPage = () => {
   const [isPreparingPhoto, setIsPreparingPhoto] = useState(false);
   const cameraInput = useRef<HTMLInputElement>(null);
   const galleryInput = useRef<HTMLInputElement>(null);
-  const [restoredDraft] = useState(() => loadDraft());
+  const [restoredDraft] = useState(() => (mealId ? null : loadDraft()));
   const [wasRestored, setWasRestored] = useState(false);
   const photoDataUrl = useRef<string | null>(null);
   const [now] = useState(() => new Date());
@@ -114,6 +124,32 @@ export const AddMealPage = () => {
     added?.scrollIntoView({ behavior: prefersStill ? "auto" : "smooth", block: "center" });
   }, [addedNotice, fields.length]);
 
+  useEffect(() => {
+    const meal = existingMeal.data;
+    if (!meal) {
+      return;
+    }
+
+    const eatenAt = new Date(meal.eatenAt);
+    const pad2 = (value: number): string => String(value).padStart(2, "0");
+
+    reset({
+      mealType: meal.mealType,
+      day: `${eatenAt.getFullYear()}-${pad2(eatenAt.getMonth() + 1)}-${pad2(eatenAt.getDate())}`,
+      time: `${pad2(eatenAt.getHours())}:${pad2(eatenAt.getMinutes())}`,
+      notes: meal.notes ?? "",
+      items: meal.items.map((item) => ({
+        name: item.name,
+        quantity: toFieldValue(item.quantity),
+        unit: item.unit,
+        kcal: toFieldValue(item.kcal),
+        protein_g: toFieldValue(item.proteinG),
+        fat_g: toFieldValue(item.fatG),
+        carbohydrates_g: toFieldValue(item.carbohydratesG),
+      })),
+    });
+  }, [existingMeal.data, reset]);
+
   // Pick the draft back up after the browser rebuilt the page.
   useEffect(() => {
     if (!restoredDraft) {
@@ -142,14 +178,22 @@ export const AddMealPage = () => {
   }, [description, getValues]);
 
   useEffect(() => {
+    if (isEditing) {
+      return;
+    }
+
     const subscription = watch(() => persistDraft());
 
     return () => subscription.unsubscribe();
-  }, [persistDraft, watch]);
+  }, [isEditing, persistDraft, watch]);
 
   useEffect(() => {
+    if (isEditing) {
+      return;
+    }
+
     persistDraft();
-  }, [persistDraft, photo]);
+  }, [isEditing, persistDraft, photo]);
 
   // The preview holds an object URL, which has to be handed back.
   useEffect(() => {
@@ -239,13 +283,21 @@ export const AddMealPage = () => {
     setSubmissionError(null);
 
     try {
-      await createMeal.mutateAsync(values);
-      clearDraft();
+      if (mealId) {
+        await updateMeal.mutateAsync({ mealId, values });
+      } else {
+        await createMeal.mutateAsync(values);
+        clearDraft();
+      }
       navigate("/dashboard", { replace: true });
     } catch (error) {
       setSubmissionError(getMealErrorMessage(error));
     }
   });
+
+  if (isEditing && existingMeal.isPending) {
+    return <PageLoader message="Cargando la comida…" />;
+  }
 
   return (
     <section className="add-meal">
@@ -263,126 +315,130 @@ export const AddMealPage = () => {
         <div className="add-meal__heading">
           <p className="eyebrow">
             <span aria-hidden="true">✦</span>
-            Registro manual
+            {isEditing ? "Corregir" : "Registro manual"}
           </p>
-          <h1>Añade una comida</h1>
+          <h1>{isEditing ? "Edita la comida" : "Añade una comida"}</h1>
           <p>
             Escribe lo que has comido y sus valores. Nada se estima por ti: los totales salen de
             lo que introduzcas.
           </p>
         </div>
 
-        <section className="describe" aria-label="Describir la comida">
-          <label className="form-field__label" htmlFor="meal-description">
-            ¿No sabes los valores? Describe lo que has comido
-          </label>
-          <p className="describe__hint">
-            Por ejemplo: «un café con nata» o «dos tostadas con aceite y tomate».
-          </p>
-          <div className="describe__row">
-            <input
-              className="form-field__input"
-              id="meal-description"
-              type="text"
-              value={description}
-              placeholder="Media tarrina de mascarpone"
-              onChange={(event) => setDescription(event.target.value)}
-              disabled={describeMeal.isPending}
-            />
-            <button
-              className="button button--secondary"
-              type="button"
-              onClick={() => void onEstimate()}
-              disabled={describeMeal.isPending || description.trim().length === 0}
-            >
-              {describeMeal.isPending ? "Estimando…" : "Estimar valores"}
-            </button>
-          </div>
-
-          <div className="describe__photo">
-            <label className="describe__photo-pick" htmlFor="meal-photo-camera">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 8h3l1.5-2h7L17 8h3v11H4z" />
-                <circle cx="12" cy="13" r="3.5" />
-              </svg>
-              Hacer una foto
+        {isEditing ? null : (
+          <section className="describe" aria-label="Describir la comida">
+            <label className="form-field__label" htmlFor="meal-description">
+              ¿No sabes los valores? Describe lo que has comido
             </label>
-            <input
-              className="describe__photo-input"
-              id="meal-photo-camera"
-              ref={cameraInput}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(event) => void onPickPhoto(event.target.files?.[0])}
-              disabled={describeMeal.isPending || isPreparingPhoto}
-            />
-
-            <label className="describe__photo-pick" htmlFor="meal-photo-file">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M5 19V5h9l5 5v9z" />
-                <path d="M14 5v5h5" />
-              </svg>
-              Elegir una imagen
-            </label>
-            <input
-              className="describe__photo-input"
-              id="meal-photo-file"
-              ref={galleryInput}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={(event) => void onPickPhoto(event.target.files?.[0])}
-              disabled={describeMeal.isPending || isPreparingPhoto}
-            />
-
-            {isPreparingPhoto ? (
-              <span className="describe__photo-hint">Preparando la foto…</span>
-            ) : null}
-
-            {!photo && !isPreparingPhoto ? (
-              <span className="describe__photo-hint">
-                Con la tabla nutricional el cálculo es mucho más fiable.
-              </span>
-            ) : null}
-          </div>
-
-          {photo ? (
-            <div className="photo-preview">
-              {photoPreview ? (
-                <img src={photoPreview} alt="La foto que vas a enviar" />
-              ) : null}
-              <div className="photo-preview__detail">
-                <p className="photo-preview__name">Foto lista para enviar</p>
-                <p className="photo-preview__size">{formatFileSize(photo.size)}</p>
-                <p className="photo-preview__check">
-                  Comprueba que la tabla se lee antes de estimar.
-                </p>
-                <button className="photo-preview__remove" type="button" onClick={clearPhoto}>
-                  Quitar la foto
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-          <p className="describe__notice">
-            La foto se envía a OpenAI para leerla y no se guarda en ningún sitio.
-          </p>
-          {estimateError ? (
-            <p className="auth-form__error" role="alert">
-              {estimateError}
+            <p className="describe__hint">
+              Por ejemplo: «un café con nata» o «dos tostadas con aceite y tomate».
             </p>
-          ) : null}
-        </section>
+            <div className="describe__row">
+              <input
+                className="form-field__input"
+                id="meal-description"
+                type="text"
+                value={description}
+                placeholder="Media tarrina de mascarpone"
+                onChange={(event) => setDescription(event.target.value)}
+                disabled={describeMeal.isPending}
+              />
+              <button
+                className="button button--secondary"
+                type="button"
+                onClick={() => void onEstimate()}
+                disabled={describeMeal.isPending || description.trim().length === 0}
+              >
+                {describeMeal.isPending ? "Estimando…" : "Estimar valores"}
+              </button>
+            </div>
+
+            <div className="describe__photo">
+              <label className="describe__photo-pick" htmlFor="meal-photo-camera">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 8h3l1.5-2h7L17 8h3v11H4z" />
+                  <circle cx="12" cy="13" r="3.5" />
+                </svg>
+                Hacer una foto
+              </label>
+              <input
+                className="describe__photo-input"
+                id="meal-photo-camera"
+                ref={cameraInput}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(event) => void onPickPhoto(event.target.files?.[0])}
+                disabled={describeMeal.isPending || isPreparingPhoto}
+              />
+
+              <label className="describe__photo-pick" htmlFor="meal-photo-file">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 19V5h9l5 5v9z" />
+                  <path d="M14 5v5h5" />
+                </svg>
+                Elegir una imagen
+              </label>
+              <input
+                className="describe__photo-input"
+                id="meal-photo-file"
+                ref={galleryInput}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) => void onPickPhoto(event.target.files?.[0])}
+                disabled={describeMeal.isPending || isPreparingPhoto}
+              />
+
+              {isPreparingPhoto ? (
+                <span className="describe__photo-hint">Preparando la foto…</span>
+              ) : null}
+
+              {!photo && !isPreparingPhoto ? (
+                <span className="describe__photo-hint">
+                  Con la tabla nutricional el cálculo es mucho más fiable.
+                </span>
+              ) : null}
+            </div>
+
+            {photo ? (
+              <div className="photo-preview">
+                {photoPreview ? (
+                  <img src={photoPreview} alt="La foto que vas a enviar" />
+                ) : null}
+                <div className="photo-preview__detail">
+                  <p className="photo-preview__name">Foto lista para enviar</p>
+                  <p className="photo-preview__size">{formatFileSize(photo.size)}</p>
+                  <p className="photo-preview__check">
+                    Comprueba que la tabla se lee antes de estimar.
+                  </p>
+                  <button className="photo-preview__remove" type="button" onClick={clearPhoto}>
+                    Quitar la foto
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            <p className="describe__notice">
+              La foto se envía a OpenAI para leerla y no se guarda en ningún sitio.
+            </p>
+            {estimateError ? (
+              <p className="auth-form__error" role="alert">
+                {estimateError}
+              </p>
+            ) : null}
+          </section>
+        )}
 
         {estimates.map((entry, index) => (
           <EstimatePanel key={`${entry.summary}-${index}`} estimate={entry} />
         ))}
 
-        <RecentMeals
-          onPick={onPickRecent}
-          disabled={describeMeal.isPending}
-          addedNotice={addedNotice}
-        />
+        {isEditing ? null : (
+          <RecentMeals
+            onPick={onPickRecent}
+            disabled={describeMeal.isPending}
+            addedNotice={addedNotice}
+          />
+        )}
 
         <form className="add-meal__form" onSubmit={(event) => void onSubmit(event)} noValidate>
           {submissionError ? (
@@ -534,7 +590,7 @@ export const AddMealPage = () => {
 
           <div className="add-meal__actions">
             <button className="button button--primary" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Guardando…" : "Guardar comida"}
+              {isSubmitting ? "Guardando…" : isEditing ? "Guardar cambios" : "Guardar comida"}
             </button>
             <Link className="text-link" to="/dashboard">
               Cancelar
