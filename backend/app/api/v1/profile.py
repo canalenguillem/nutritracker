@@ -36,6 +36,8 @@ async def update_profile(
             biological_sex_provided="biological_sex" in provided,
             activity_level=payload.activity_level,
             primary_goal=payload.primary_goal,
+            daily_calorie_target=payload.daily_calorie_target,
+            daily_calorie_target_provided="daily_calorie_target" in provided,
         ),
     )
     return ProfileResponse.model_validate(profile)

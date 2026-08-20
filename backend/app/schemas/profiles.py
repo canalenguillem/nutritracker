@@ -21,6 +21,9 @@ class ProfileUpdateRequest(BaseModel):
     biological_sex: BiologicalSex | None = None
     activity_level: ActivityLevel | None = None
     primary_goal: PrimaryGoal | None = None
+    daily_calorie_target: Decimal | None = Field(
+        default=None, gt=Decimal("500"), le=Decimal("10000"), decimal_places=2
+    )
 
 
 class ProfileResponse(BaseModel):
@@ -34,3 +37,4 @@ class ProfileResponse(BaseModel):
     biological_sex: str | None
     activity_level: str
     primary_goal: str
+    daily_calorie_target: Decimal | None

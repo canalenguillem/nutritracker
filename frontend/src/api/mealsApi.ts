@@ -85,6 +85,10 @@ const toDailySummary = (response: DailySummaryResponse): DailySummary => ({
       ? null
       : Number(response.total_expenditure_kcal),
   balanceKcal: response.balance_kcal === null ? null : Number(response.balance_kcal),
+  dailyTargetKcal:
+    response.daily_target_kcal === null ? null : Number(response.daily_target_kcal),
+  remainingKcal: response.remaining_kcal === null ? null : Number(response.remaining_kcal),
+  isComplete: response.is_complete,
   kcal: Number(response.total_kcal),
   proteinG: Number(response.protein_g),
   fatG: Number(response.fat_g),

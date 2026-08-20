@@ -252,3 +252,85 @@ def test_the_total_is_daily_living_plus_training_and_nothing_else() -> None:
         balance.resting_kcal + balance.living_kcal + balance.exercise_above_resting_kcal
     )
     assert balance.balance_kcal == Decimal("1435") - balance.total_expenditure_kcal
+
+
+def test_without_a_target_nothing_is_left_to_report() -> None:
+    balance = energy_balance(
+        consumed_kcal=Decimal("204.00"),
+        exercise_kcal=Decimal("0"),
+        exercise_minutes=0,
+        weight_kg=Decimal("105.40"),
+        height_cm=Decimal("174.00"),
+        birth_date=date(1974, 9, 11),
+        biological_sex="male",
+        activity_level="sedentary",
+        today=TODAY,
+    )
+
+    assert balance.daily_target_kcal is None
+    assert balance.remaining_kcal is None
+
+
+def test_what_is_left_counts_the_target_and_the_training() -> None:
+    balance = energy_balance(
+        consumed_kcal=Decimal("204.00"),
+        exercise_kcal=Decimal("1360.00"),
+        exercise_minutes=97,
+        daily_target_kcal=Decimal("1770.00"),
+        weight_kg=Decimal("105.40"),
+        height_cm=Decimal("174.00"),
+        birth_date=date(1974, 9, 11),
+        biological_sex="male",
+        activity_level="sedentary",
+        today=TODAY,
+    )
+
+    assert balance.exercise_above_resting_kcal == Decimal("1233")
+    # 1770 aimed for, 1233 earned by training, 204 already eaten.
+    assert balance.remaining_kcal == Decimal("2799")
+
+
+def test_eating_past_the_target_leaves_a_negative_figure() -> None:
+    balance = energy_balance(
+        consumed_kcal=Decimal("2500.00"),
+        exercise_kcal=Decimal("0"),
+        exercise_minutes=0,
+        daily_target_kcal=Decimal("1770.00"),
+        weight_kg=Decimal("105.40"),
+        height_cm=Decimal("174.00"),
+        birth_date=date(1974, 9, 11),
+        biological_sex="male",
+        activity_level="sedentary",
+        today=TODAY,
+    )
+
+    assert balance.remaining_kcal == Decimal("-730")
+
+
+def test_a_target_does_not_disturb_the_balance() -> None:
+    """What is left to eat is a separate question from what the day added up to."""
+    without = energy_balance(
+        consumed_kcal=Decimal("1435.00"),
+        exercise_kcal=Decimal("0"),
+        exercise_minutes=0,
+        weight_kg=Decimal("105.40"),
+        height_cm=Decimal("174.00"),
+        birth_date=date(1974, 9, 11),
+        biological_sex="male",
+        activity_level="sedentary",
+        today=TODAY,
+    )
+    with_target = energy_balance(
+        consumed_kcal=Decimal("1435.00"),
+        exercise_kcal=Decimal("0"),
+        exercise_minutes=0,
+        daily_target_kcal=Decimal("1770.00"),
+        weight_kg=Decimal("105.40"),
+        height_cm=Decimal("174.00"),
+        birth_date=date(1974, 9, 11),
+        biological_sex="male",
+        activity_level="sedentary",
+        today=TODAY,
+    )
+
+    assert without.balance_kcal == with_target.balance_kcal

@@ -101,6 +101,11 @@ class DailySummaryResponse(BaseModel):
     exercise_above_resting_kcal: Decimal | None
     total_expenditure_kcal: Decimal | None
     balance_kcal: Decimal | None
+    daily_target_kcal: Decimal | None
+    remaining_kcal: Decimal | None
+    #: False while the day is still running, so a part-eaten day is not
+    #: presented as a finished one.
+    is_complete: bool
 
     @field_serializer("fasting_started_at", "fasting_ended_at")
     def serialize_fasting_instant(self, moment: datetime | None) -> datetime | None:

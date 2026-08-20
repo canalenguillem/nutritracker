@@ -46,6 +46,10 @@ class EnergyBalance:
     exercise_above_resting_kcal: Decimal | None = None
     total_expenditure_kcal: Decimal | None = None
     balance_kcal: Decimal | None = None
+    #: The intake the person is aiming for on an ordinary day, if they set one.
+    daily_target_kcal: Decimal | None = None
+    #: Target plus what training earned, minus what has been eaten.
+    remaining_kcal: Decimal | None = None
 
 
 def _round(value: Decimal) -> Decimal:
@@ -83,6 +87,7 @@ def energy_balance(
     consumed_kcal: Decimal,
     exercise_kcal: Decimal,
     exercise_minutes: int,
+    daily_target_kcal: Decimal | None = None,
     weight_kg: Decimal | None,
     height_cm: Decimal | None,
     birth_date: date | None,
@@ -114,6 +119,14 @@ def energy_balance(
     above_resting = _round(max(exercise_kcal - resting_during_training, Decimal("0")))
     total = _round(living + above_resting)
 
+    # Training earns room to eat, which is why it is added rather than the
+    # target being lowered on the days someone trains.
+    remaining = (
+        _round(daily_target_kcal + above_resting - consumed_kcal)
+        if daily_target_kcal is not None
+        else None
+    )
+
     return EnergyBalance(
         status="estimated",
         consumed_kcal=consumed_kcal,
@@ -123,4 +136,6 @@ def energy_balance(
         exercise_above_resting_kcal=above_resting,
         total_expenditure_kcal=total,
         balance_kcal=_round(consumed_kcal - total),
+        daily_target_kcal=daily_target_kcal,
+        remaining_kcal=remaining,
     )

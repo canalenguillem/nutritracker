@@ -70,6 +70,9 @@ export const dailySummaryResponseSchema = z
     exercise_above_resting_kcal: z.string().nullable(),
     total_expenditure_kcal: z.string().nullable(),
     balance_kcal: z.string().nullable(),
+    daily_target_kcal: z.string().nullable(),
+    remaining_kcal: z.string().nullable(),
+    is_complete: z.boolean(),
   })
   .passthrough();
 

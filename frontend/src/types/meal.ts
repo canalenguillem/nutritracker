@@ -69,6 +69,10 @@ export interface DailySummary extends Macros {
   readonly exerciseAboveRestingKcal: number | null;
   readonly totalExpenditureKcal: number | null;
   readonly balanceKcal: number | null;
+  readonly dailyTargetKcal: number | null;
+  readonly remainingKcal: number | null;
+  /** False while the day is still running. */
+  readonly isComplete: boolean;
 }
 
 export interface EstimatedItem extends Macros, MacroCheck {

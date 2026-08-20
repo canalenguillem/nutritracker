@@ -39,6 +39,7 @@ export const ProfilePage = () => {
       biologicalSex: "unspecified",
       activityLevel: "moderate",
       primaryGoal: "maintain_weight",
+      dailyCalorieTarget: "",
     },
   });
 
@@ -56,6 +57,7 @@ export const ProfilePage = () => {
         "unspecified") as ProfileFormValues["biologicalSex"],
       activityLevel: profile.data.activityLevel as ProfileFormValues["activityLevel"],
       primaryGoal: profile.data.primaryGoal as ProfileFormValues["primaryGoal"],
+      dailyCalorieTarget: decimalToField(profile.data.dailyCalorieTarget),
     });
   }, [profile.data, reset]);
 
@@ -184,6 +186,16 @@ export const ProfilePage = () => {
               </select>
             </div>
           </div>
+
+          <FormField
+            label="Objetivo de calorías al día (opcional)"
+            type="text"
+            inputMode="decimal"
+            placeholder="1800"
+            hint="Lo que quieres comer en un día normal, sin contar entrenamientos. Si lo pones, el panel te dirá cuánto te queda."
+            error={errors.dailyCalorieTarget?.message}
+            {...register("dailyCalorieTarget")}
+          />
 
           <p className="dashboard__disclaimer">
             La actividad diaria no incluye tus entrenamientos: esos los registras uno a uno y se

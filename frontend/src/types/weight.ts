@@ -55,4 +55,5 @@ export interface Profile {
   readonly biologicalSex: string | null;
   readonly activityLevel: string;
   readonly primaryGoal: string;
+  readonly dailyCalorieTarget: number | null;
 }

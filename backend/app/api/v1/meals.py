@@ -119,6 +119,7 @@ async def _summarise(
     balance = energy_balance(
         consumed_kcal=summary.totals.kcal,
         exercise_kcal=burned,
+        daily_target_kcal=profile.daily_calorie_target,
         exercise_minutes=sum(exercise.duration_minutes for exercise in performed),
         weight_kg=profile.current_weight_kg,
         height_cm=profile.height_cm,
@@ -148,6 +149,9 @@ async def _summarise(
         exercise_above_resting_kcal=balance.exercise_above_resting_kcal,
         total_expenditure_kcal=balance.total_expenditure_kcal,
         balance_kcal=balance.balance_kcal,
+        daily_target_kcal=balance.daily_target_kcal,
+        remaining_kcal=balance.remaining_kcal,
+        is_complete=day < local_log_date(utc_now(), user.timezone),
     )
 
 

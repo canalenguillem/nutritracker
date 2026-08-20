@@ -38,20 +38,53 @@ export const DailyBalance = ({ summary }: DailyBalanceProps) => {
 
   const balance = summary.balanceKcal ?? 0;
   const isDeficit = balance < 0;
-  const headline = isDeficit
-    ? `Déficit de ${formatEnergy(Math.abs(balance))} kcal`
-    : balance > 0
-      ? `Superávit de ${formatEnergy(balance)} kcal`
-      : "En equilibrio";
+
+  // A day still running has spent a whole day's energy but only eaten part of
+  // its food, so calling that difference a deficit at breakfast is nonsense.
+  // While it runs, what matters is how much is left to eat.
+  const heading = summary.isComplete
+    ? "Balance estimado del día"
+    : summary.remainingKcal !== null
+      ? "Te queda por comer"
+      : "Lo que va de día";
+
+  const headline = summary.isComplete
+    ? isDeficit
+      ? `Déficit de ${formatEnergy(Math.abs(balance))} kcal`
+      : balance > 0
+        ? `Superávit de ${formatEnergy(balance)} kcal`
+        : "En equilibrio"
+    : summary.remainingKcal !== null
+      ? summary.remainingKcal >= 0
+        ? `${formatEnergy(summary.remainingKcal)} kcal`
+        : `Te has pasado ${formatEnergy(Math.abs(summary.remainingKcal))} kcal`
+      : `${formatEnergy(summary.kcal)} kcal comidas`;
+
+  const isGood = summary.isComplete ? isDeficit : (summary.remainingKcal ?? 0) >= 0;
 
   return (
-    <div className={isDeficit ? "balance balance--deficit" : "balance balance--surplus"}>
-      <p className="balance__label">Balance estimado del día</p>
+    <div className={isGood ? "balance balance--deficit" : "balance balance--surplus"}>
+      <p className="balance__label">{heading}</p>
       <p className="balance__value">{headline}</p>
+
+      {!summary.isComplete && summary.remainingKcal !== null ? (
+        <p className="balance__detail balance__detail--lead">
+          Sobre tu objetivo de {formatEnergy(summary.dailyTargetKcal ?? 0)} kcal, más las{" "}
+          {formatEnergy(summary.exerciseAboveRestingKcal ?? 0)} que has ganado entrenando.
+        </p>
+      ) : null}
+
+      {!summary.isComplete && summary.remainingKcal === null ? (
+        <p className="balance__detail balance__detail--lead">
+          El día no ha terminado, así que todavía no hay un balance que dar: has gastado un día
+          entero y comido solo una parte. <Link to="/profile">Fija un objetivo diario</Link> y
+          aquí verás cuánto te queda.
+        </p>
+      ) : null}
 
       <dl className="balance__rows">
         <div>
-          <dt>Comida</dt>
+          <dt>Comida {summary.isComplete ? "" : "hasta ahora"}</dt>
           <dd>{formatEnergy(summary.kcal)} kcal</dd>
         </div>
         {/* Only the rows that add up carry a sign: a column of signed figures
@@ -80,6 +113,9 @@ export const DailyBalance = ({ summary }: DailyBalanceProps) => {
       </dl>
 
       <p className="balance__detail">
+        {summary.isComplete
+          ? ""
+          : "El gasto es el de un día completo, así que compararlo con lo comido hasta ahora no da un déficit todavía. "}
         El entrenamiento se cuenta solo por encima del reposo: durante esos minutos tu cuerpo
         habría gastado algo de todos modos, y la vida diaria ya lo incluye.
         {summary.exerciseKcal > (summary.exerciseAboveRestingKcal ?? 0)

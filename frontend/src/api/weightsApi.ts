@@ -50,6 +50,7 @@ const toProfile = (response: ProfileResponse): Profile => ({
   biologicalSex: response.biological_sex,
   activityLevel: response.activity_level,
   primaryGoal: response.primary_goal,
+  dailyCalorieTarget: optionalNumber(response.daily_calorie_target),
 });
 
 export const getWeightHistory = async (): Promise<WeightHistory> => {
@@ -84,6 +85,7 @@ export const updateProfile = async (values: ProfileFormValues): Promise<Profile>
     biological_sex: values.biologicalSex,
     activity_level: values.activityLevel,
     primary_goal: values.primaryGoal,
+    daily_calorie_target: optionalAmount(values.dailyCalorieTarget),
   });
 
   return toProfile(profileResponseSchema.parse(response.data));

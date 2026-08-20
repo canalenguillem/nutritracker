@@ -61,6 +61,7 @@ export const profileResponseSchema = z
     biological_sex: z.string().nullable(),
     activity_level: z.string(),
     primary_goal: z.string(),
+    daily_calorie_target: z.string().nullable(),
   })
   .passthrough();
 
@@ -97,4 +98,5 @@ export const profileFormSchema = z.object({
   biologicalSex: z.enum(["female", "male", "unspecified"]),
   activityLevel: z.enum(["sedentary", "light", "moderate", "active", "very_active"]),
   primaryGoal: z.enum(["lose_weight", "maintain_weight", "gain_muscle"]),
+  dailyCalorieTarget: optionalMeasure("Indica un objetivo entre 500 y 10000 kcal.", 500, 10000),
 });

@@ -18,6 +18,8 @@ class ProfileChanges:
     biological_sex_provided: bool = False
     activity_level: str | None = None
     primary_goal: str | None = None
+    daily_calorie_target: Decimal | None = None
+    daily_calorie_target_provided: bool = False
 
 
 class ProfileService:
@@ -47,5 +49,7 @@ class ProfileService:
             profile.activity_level = changes.activity_level
         if changes.primary_goal is not None:
             profile.primary_goal = changes.primary_goal
+        if changes.daily_calorie_target_provided:
+            profile.daily_calorie_target = changes.daily_calorie_target
 
         return profile
