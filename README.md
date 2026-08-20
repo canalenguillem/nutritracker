@@ -6,7 +6,17 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 14 incluye, además de todo lo anterior:
+La Fase 15 incluye, además de todo lo anterior:
+
+- El día en curso deja de anunciar un déficit: se ha gastado un día entero y
+  comido solo una parte, así que esa resta no es un balance todavía.
+- Objetivo diario de calorías en el perfil, opcional. Con él, el titular pasa a
+  ser lo que queda por comer, contando lo que el entrenamiento ha ganado.
+- Sin objetivo, el titular dice lo que se lleva comido y ofrece fijar uno.
+- Un día ya terminado sigue mostrando su déficit o superávit, que ahí sí
+  compara dos cosas comparables.
+
+La Fase 14 aportó la edición:
 
 - Se puede corregir lo registrado: comidas, sesiones de ejercicio y noches.
   Cada tarjeta del diario lleva su enlace de edición.
