@@ -220,3 +220,35 @@ def test_sitting_all_day_spends_less_than_moving_all_day() -> None:
         return balance.living_kcal
 
     assert spend("sedentary") < spend("light") < spend("moderate") < spend("active")
+
+
+def test_the_total_is_daily_living_plus_training_and_nothing_else() -> None:
+    """Resting must not be added on its own: daily living already contains it.
+
+    The interface shows resting as a figure, which invites reading the column as
+    a sum of every line. It is not, and this pins the arithmetic down.
+    """
+    balance = energy_balance(
+        consumed_kcal=Decimal("1435.00"),
+        exercise_kcal=Decimal("1360.00"),
+        exercise_minutes=97,
+        weight_kg=Decimal("105.40"),
+        height_cm=Decimal("174.00"),
+        birth_date=date(1974, 9, 11),
+        biological_sex="male",
+        activity_level="moderate",
+        today=TODAY,
+    )
+
+    assert balance.living_kcal is not None
+    assert balance.exercise_above_resting_kcal is not None
+    assert balance.resting_kcal is not None
+
+    assert balance.total_expenditure_kcal == (
+        balance.living_kcal + balance.exercise_above_resting_kcal
+    )
+    # And emphatically not the sum that counts the basal rate twice.
+    assert balance.total_expenditure_kcal != (
+        balance.resting_kcal + balance.living_kcal + balance.exercise_above_resting_kcal
+    )
+    assert balance.balance_kcal == Decimal("1435") - balance.total_expenditure_kcal

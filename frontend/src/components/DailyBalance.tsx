@@ -54,16 +54,23 @@ export const DailyBalance = ({ summary }: DailyBalanceProps) => {
           <dt>Comida</dt>
           <dd>{formatEnergy(summary.kcal)} kcal</dd>
         </div>
+        {/* Only the rows that add up carry a sign: a column of signed figures
+            ending in a total reads as a sum, so resting cannot sit among them
+            when it is already inside daily living. */}
         <div>
-          <dt>En reposo</dt>
-          <dd>{formatSpent(summary.restingKcal ?? 0)}</dd>
-        </div>
-        <div>
-          <dt>Vida diaria, con el reposo dentro</dt>
+          <dt>
+            Vida diaria
+            <span className="balance__aside">
+              incluye {formatEnergy(summary.restingKcal ?? 0)} kcal en reposo
+            </span>
+          </dt>
           <dd>{formatSpent(summary.livingKcal ?? 0)}</dd>
         </div>
         <div>
-          <dt>Entrenamiento, por encima del reposo</dt>
+          <dt>
+            Entrenamiento
+            <span className="balance__aside">por encima del reposo</span>
+          </dt>
           <dd>{formatSpent(summary.exerciseAboveRestingKcal ?? 0)}</dd>
         </div>
         <div className="balance__rows-total">

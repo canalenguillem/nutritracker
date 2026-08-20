@@ -2946,3 +2946,14 @@ select.form-field__input {
 .sleep__actions .sleep__remove {
   margin-top: 0;
 }
+
+.balance__rows dt {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.balance__aside {
+  color: var(--color-ink-faint, #8a988f);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
