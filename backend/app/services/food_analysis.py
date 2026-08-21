@@ -110,8 +110,8 @@ class FoodAnalysisService:
         photo: MealPhoto | None = None,
     ) -> FoodEstimate:
         cleaned = description.strip()
-        if not cleaned:
-            raise InvalidAnalysisResponseError("The description is empty.")
+        if not cleaned and photo is None:
+            raise InvalidAnalysisResponseError("There is nothing to work from.")
 
         # A picture changes the answer, so it has to change the key too.
         key = normalize_description(cleaned)

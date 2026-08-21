@@ -11,6 +11,7 @@ from app.services.food_analysis import (
     FoodAnalysisService,
     FoodEstimate,
     InvalidAnalysisResponseError,
+    MealPhoto,
     normalize_description,
 )
 from app.services.openai_food_analyzer import _to_estimate
@@ -219,3 +220,37 @@ def test_the_same_meal_typed_differently_shares_a_key() -> None:
         "un café con nata"
     )
     assert normalize_description("café  con   nata") == "café con nata"
+
+
+async def test_a_picture_alone_is_enough_to_work_from() -> None:
+    analyzer = FakeFoodAnalyzer(estimate=COFFEE)
+    service = FoodAnalysisService(analyzer)
+    photo = MealPhoto(content=b"\xff\xd8\xff" + b"0" * 32, media_type="image/jpeg")
+
+    estimate = await service.describe(USER_ID, "", photo=photo)
+
+    assert estimate.items
+    assert analyzer.photos == [photo]
+
+
+async def test_with_neither_words_nor_picture_there_is_nothing_to_do() -> None:
+    service = FoodAnalysisService(FakeFoodAnalyzer(estimate=COFFEE))
+
+    with pytest.raises(InvalidAnalysisResponseError):
+        await service.describe(USER_ID, "   ")
+
+
+async def test_two_pictures_of_different_plates_are_not_the_same_estimate() -> None:
+    analyzer = FakeFoodAnalyzer(estimate=COFFEE)
+    cache = FakeFoodEstimateCache()
+    first = MealPhoto(content=b"\xff\xd8\xff" + b"a" * 32, media_type="image/jpeg")
+    second = MealPhoto(content=b"\xff\xd8\xff" + b"b" * 32, media_type="image/jpeg")
+
+    await service_with(analyzer, cache).describe(USER_ID, "", photo=first)
+    await service_with(analyzer, cache).describe(USER_ID, "", photo=second)
+
+    assert len(analyzer.calls) == 2
+
+
+def service_with(analyzer: FakeFoodAnalyzer, cache: FakeFoodEstimateCache) -> FoodAnalysisService:
+    return FoodAnalysisService(analyzer, cache)

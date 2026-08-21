@@ -327,10 +327,11 @@ export const AddMealPage = () => {
         {isEditing ? null : (
           <section className="describe" aria-label="Describir la comida">
             <label className="form-field__label" htmlFor="meal-description">
-              ¿No sabes los valores? Describe lo que has comido
+              ¿No sabes los valores? Descríbelo o hazle una foto
             </label>
             <p className="describe__hint">
-              Por ejemplo: «un café con nata» o «dos tostadas con aceite y tomate».
+              Escribe «un café con nata», o fotografía el plato o su tabla nutricional. Puedes
+              hacer las dos cosas: lo que cuentes ayuda a leer la foto.
             </p>
             <div className="describe__row">
               <input
@@ -346,7 +347,9 @@ export const AddMealPage = () => {
                 className="button button--secondary"
                 type="button"
                 onClick={() => void onEstimate()}
-                disabled={describeMeal.isPending || description.trim().length === 0}
+                disabled={
+                describeMeal.isPending || (description.trim().length === 0 && photo === null)
+              }
               >
                 {describeMeal.isPending ? "Estimando…" : "Estimar valores"}
               </button>

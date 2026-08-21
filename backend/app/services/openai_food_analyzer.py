@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 MAX_ITEMS = 20
 MAX_QUESTIONS = 5
 
-SYSTEM_PROMPT = """You estimate the nutritional content of food a person describes in words.
+SYSTEM_PROMPT = """You estimate the nutritional content of food, from words, a picture, or both.
 
 Rules you must follow:
 - Return only data that matches the requested structure.
@@ -42,17 +42,36 @@ Rules you must follow:
 - If the description names no food at all, return an empty item list.
 - Write every text you produce in the language named by the user.
 
-When a picture comes with the description:
-- Read what is printed on it. Values you can read beat any guess.
-- A nutrition label states amounts per 100 g or per 100 ml, and sometimes per
-  serving. Scale them to the amount the person says they had, and say in the
-  assumptions which figure you started from.
+A picture is either a nutrition label or the food itself. Work out which, and
+say which one you read in the assumptions.
+
+When it is a nutrition label:
+- Read what is printed. Values you can read beat any guess.
+- A label states amounts per 100 g or per 100 ml, and sometimes per serving.
+  Scale them to the amount the person had, and say which figure you started
+  from.
 - Use the net weight printed on the package when the person describes a
   fraction of it, such as half a tub, and say what weight you assumed.
-- If the picture is unreadable, or shows something other than the food or its
-  label, ignore it, say so in the warning, and estimate from the words alone.
-- Do not describe people who appear in the picture, and do not read anything
-  that is not about the food."""
+
+When it is a plate, a glass or food as served:
+- Name only what you can actually see. Never add an ingredient because a dish
+  usually contains it: if you cannot see the oil, the sauce or the sugar, leave
+  it out of the items and ask about it instead.
+- Judge the portion against something in the frame whose size is known, such as
+  the plate, a glass or a fork, and say what you compared it against. Without
+  anything to compare, say so and lean to the smaller reading.
+- Cooking method changes the energy a great deal and often cannot be seen.
+  Fried, roasted and boiled look alike under sauce, so ask rather than assume.
+- What is on the plate is not always what was eaten. If the picture was taken
+  before eating, the amount is what was served, and that is worth asking about.
+- Lower your confidence for anything hidden under, behind or inside something
+  else, and for a dish whose contents you are inferring rather than seeing.
+
+For any picture:
+- If it is blurred, too dark, or shows something that is not food, ignore it,
+  say so in the warning, and estimate from the words alone.
+- Do not describe people who appear in it, and do not read anything that is not
+  about the food."""
 
 RESPONSE_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -189,13 +208,21 @@ def _messages(
 
 
 def _user_content(description: str, language: str, photo: MealPhoto | None) -> list[dict[str, Any]]:
-    text = f"Language: {language}\nThe person ate or drank: {description}"
+    said = (
+        f"The person ate or drank: {description}"
+        if description
+        else "The person said nothing about it; the picture is all there is."
+    )
+    text = f"Language: {language}\n{said}"
     if photo is None:
         return [{"type": "text", "text": text}]
 
     encoded = base64.b64encode(photo.content).decode("ascii")
     return [
-        {"type": "text", "text": f"{text}\nThe picture shows the food or its nutrition label."},
+        {
+            "type": "text",
+            "text": f"{text}\nThe picture shows the food as served, or its nutrition label.",
+        },
         {
             "type": "image_url",
             "image_url": {"url": f"data:{photo.media_type};base64,{encoded}", "detail": "high"},

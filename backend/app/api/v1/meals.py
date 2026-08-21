@@ -172,7 +172,7 @@ async def describe_meal(
     user: CurrentUserDependency,
     analysis: FoodAnalysisServiceDependency,
     settings: SettingsDependency,
-    description: Annotated[str, Form(min_length=1, max_length=600)],
+    description: Annotated[str, Form(max_length=600)] = "",
     photo: Annotated[UploadFile | None, File()] = None,
 ) -> FoodEstimateResponse:
     """Estimate a meal from a description, optionally with a picture of the label.
@@ -181,6 +181,13 @@ async def describe_meal(
     the provider to be read and then dropped.
     """
     meal_photo = await _read_photo(photo, settings.max_upload_mb)
+
+    if not description.strip() and meal_photo is None:
+        raise ApiError(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="VALIDATION_ERROR",
+            detail="Describe the meal, attach a picture of it, or both.",
+        )
 
     try:
         estimate = await analysis.describe(user.id, description, user.locale, meal_photo)

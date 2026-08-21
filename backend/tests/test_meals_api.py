@@ -600,3 +600,36 @@ async def test_the_history_refuses_an_absurd_span(client: AsyncClient) -> None:
     assert (
         await client.get("/api/v1/meals/history", params={"days": 400}, headers=headers)
     ).status_code == 422
+
+
+async def test_a_photo_of_the_plate_needs_no_words(
+    client: AsyncClient, application: FastAPI
+) -> None:
+    headers = await sign_up(client)
+    analyzer = FakeFoodAnalyzer(estimate=COFFEE_ESTIMATE)
+    use_analyzer(application, analyzer)
+
+    response = await client.post(
+        "/api/v1/meals/describe",
+        data={"description": ""},
+        files={"photo": ("plato.png", PNG_BYTES, "image/png")},
+        headers=headers,
+    )
+
+    assert response.status_code == 200, response.text
+    assert analyzer.photos[0] is not None
+    assert analyzer.calls[0][0] == ""
+
+
+async def test_with_neither_words_nor_photo_there_is_nothing_to_estimate(
+    client: AsyncClient, application: FastAPI
+) -> None:
+    headers = await sign_up(client)
+    use_analyzer(application, FakeFoodAnalyzer(estimate=COFFEE_ESTIMATE))
+
+    response = await client.post(
+        "/api/v1/meals/describe", data={"description": "   "}, headers=headers
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"

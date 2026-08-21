@@ -120,8 +120,12 @@ La Fase 7 aportó los platos compuestos:
 
 La Fase 6 aportó la lectura de etiquetas:
 
-- Junto a la descripción se puede adjuntar una foto de la tabla nutricional,
-  que el modelo lee para afinar la estimación.
+- Junto a la descripción se puede adjuntar una foto de la tabla nutricional o
+  del plato tal y como se sirve, y el modelo distingue cuál de las dos es.
+- Con foto del plato solo se nombra lo que se ve: si no se aprecia el aceite o
+  la salsa, se pregunta en vez de darlo por hecho, y la cantidad se juzga
+  comparándola con algo del encuadre.
+- Una foto basta por sí sola: no hace falta escribir nada si el plato habla.
 - Desde el móvil se puede hacer la foto en el momento o elegir una imagen ya
   guardada, con vista previa antes de enviarla.
 - La foto se reduce en el navegador antes de subirla, de modo que una
