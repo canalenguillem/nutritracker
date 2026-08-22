@@ -14,6 +14,7 @@ from app.models.exercise import Exercise
 from app.models.meal import DailyLog, Meal, MealItem
 from app.models.sleep import SleepEntry
 from app.models.user import AuthIdentity, RefreshToken, User, UserProfile
+from app.models.week import WeeklySummary
 from app.models.weight import WeightEntry
 
 __all__ = [
@@ -36,5 +37,6 @@ __all__ = [
     "UserProfile",
     "UserRole",
     "UserStatus",
+    "WeeklySummary",
     "WeightEntry",
 ]

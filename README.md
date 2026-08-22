@@ -6,7 +6,31 @@ alimentación, actividad y objetivos nutricionales. La implementación sigue
 
 ## Estado actual
 
-La Fase 15 incluye, además de todo lo anterior:
+La Fase 16 incluye, además de todo lo anterior:
+
+- Resumen semanal escrito con IA a partir de lo comido, lo dormido y lo movido
+  en esos siete días.
+- La semana se navega como un calendario: la tira de días lleva sus flechas para
+  ir a la semana anterior y volver, y el resumen es siempre el de la semana que
+  se está mirando.
+- Mientras la semana corre, el resumen se puede volver a generar: describe algo
+  que todavía está cambiando.
+- Cuando la semana termina, su resumen queda fijado con las cifras que lo
+  acompañan. Un resumen que se recalculara después dejaría de coincidir con lo
+  que dice, y sin una versión fija no hay nada con lo que comparar la semana
+  siguiente.
+- Solo se compara contra una semana que a su vez tenga resumen. Sin ella, se
+  dice que todavía no hay con qué comparar en lugar de inventarlo.
+- Las medias se hacen sobre los días que tienen ese dato, no sobre siete: tres
+  días anotados de siete no son una semana de ayuno.
+- Los días que aún no han llegado se marcan como tales, para que el resumen no
+  los cuente como días sin registrar.
+- Las cifras se redondean antes de llegar al modelo, que así no puede repetir
+  decimales como si la comida se hubiera pesado.
+- El resumen describe lo que pasó. No diagnostica, no receta dietas ni cifras de
+  calorías, y no lee el peso de una sola semana como grasa.
+
+La Fase 15 aportó el objetivo diario:
 
 - El día en curso deja de anunciar un déficit: se ha gastado un día entero y
   comido solo una parte, así que esa resta no es un balance todavía.

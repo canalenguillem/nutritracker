@@ -16,6 +16,7 @@ from app.repositories.refresh_tokens import SQLAlchemyRefreshTokenRepository
 from app.repositories.sleep import SQLAlchemySleepRepository
 from app.repositories.user_profiles import SQLAlchemyUserProfileRepository
 from app.repositories.users import SQLAlchemyUserRepository
+from app.repositories.weekly_summaries import SQLAlchemyWeeklySummaryRepository
 from app.repositories.weights import SQLAlchemyWeightRepository
 from app.security.tokens import TokenValidationError, decode_access_token
 from app.services.auth import AuthService, RequestContext
@@ -31,6 +32,8 @@ from app.services.openai_food_analyzer import OpenAIFoodAnalyzer
 from app.services.profiles import ProfileService
 from app.services.sleep import SleepService
 from app.services.users import UserNotFoundError, UserService
+from app.services.week_review import OpenAIWeekReviewer
+from app.services.weeks import WeekService
 from app.services.weights import WeightService
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -117,6 +120,14 @@ def get_weight_service(session: SessionDependency) -> WeightService:
 
 
 WeightServiceDependency = Annotated[WeightService, Depends(get_weight_service)]
+
+
+def get_week_service(session: SessionDependency, settings: SettingsDependency) -> WeekService:
+    reviewer = OpenAIWeekReviewer(settings) if settings.food_analysis_enabled else None
+    return WeekService(SQLAlchemyWeeklySummaryRepository(session), reviewer)
+
+
+WeekServiceDependency = Annotated[WeekService, Depends(get_week_service)]
 
 
 def get_food_analysis_service(

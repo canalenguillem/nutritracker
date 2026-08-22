@@ -2971,3 +2971,143 @@ select.form-field__input {
 .day-strip__day:disabled:hover {
   background: none;
 }
+
+.day-strip__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.day-strip__head h2 {
+  flex: 1;
+  text-align: center;
+}
+
+.day-strip__head .day-picker__step {
+  flex: none;
+  width: 2.1rem;
+  height: 2.1rem;
+}
+
+.week-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: var(--color-paper);
+  box-shadow: var(--shadow-small);
+}
+
+.week-summary__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.week-summary__head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.week-summary__range {
+  margin: 0.2rem 0 0;
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+}
+
+.week-summary__figures {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 0;
+  padding: 1rem;
+  border-radius: 16px;
+  background: var(--color-green-light);
+}
+
+.week-summary__figures > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.week-summary__figures dt {
+  color: var(--color-green-dark);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.week-summary__figures dd {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.week-summary__figures span {
+  color: var(--color-ink-soft);
+  font-size: 0.75rem;
+}
+
+.week-summary__review {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.week-summary__headline {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.week-summary__observations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--color-ink-soft);
+}
+
+.week-summary__comparison,
+.week-summary__watch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border-radius: 14px;
+  background: var(--color-cream);
+  font-size: 0.92rem;
+}
+
+.week-summary__comparison span {
+  color: var(--color-green-dark);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.week-summary__watch {
+  border-left: 3px solid var(--color-warning);
+}
+
+.week-summary__note,
+.week-summary__empty {
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 45rem) {
+  .week-summary__figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

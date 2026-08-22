@@ -9,8 +9,9 @@ import { SleptNightCard } from "../components/SleptNightCard";
 import { MacroTotals } from "../components/MacroTotals";
 import { MealCard } from "../components/MealCard";
 import { PageLoader } from "../components/PageLoader";
+import { WeekSummary } from "../components/WeekSummary";
 import { useAuth } from "../features/auth/useAuth";
-import { formatDay } from "../features/meals/mealLabels";
+import { formatDay, mondayOf } from "../features/meals/mealLabels";
 import {
   useDayExercises,
   useDeleteExercise,
@@ -79,6 +80,8 @@ export const DashboardPage = () => {
         <DayPicker selectedDay={summary.logDate} today={today} onSelect={selectDay} />
 
         <DayStrip selectedDay={summary.logDate} today={today} onSelect={selectDay} />
+
+        <WeekSummary weekStart={mondayOf(summary.logDate)} />
 
         <article className="dashboard__card">
           <div className="dashboard__card-head">
