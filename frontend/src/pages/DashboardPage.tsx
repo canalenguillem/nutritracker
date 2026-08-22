@@ -78,7 +78,7 @@ export const DashboardPage = () => {
 
         <DayPicker selectedDay={summary.logDate} today={today} onSelect={selectDay} />
 
-        <DayStrip selectedDay={summary.logDate} onSelect={selectDay} />
+        <DayStrip selectedDay={summary.logDate} today={today} onSelect={selectDay} />
 
         <article className="dashboard__card">
           <div className="dashboard__card-head">

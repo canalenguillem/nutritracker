@@ -633,3 +633,51 @@ async def test_with_neither_words_nor_photo_there_is_nothing_to_estimate(
 
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+async def test_the_history_answers_for_an_exact_span(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+
+    response = await client.get(
+        "/api/v1/meals/history",
+        params={"start": "2026-08-17", "end": "2026-08-23"},
+        headers=headers,
+    )
+
+    assert response.status_code == 200, response.text
+    dates = [day["log_date"] for day in response.json()]
+    # A Monday to the Sunday that closes its week.
+    assert dates == [
+        "2026-08-17",
+        "2026-08-18",
+        "2026-08-19",
+        "2026-08-20",
+        "2026-08-21",
+        "2026-08-22",
+        "2026-08-23",
+    ]
+
+
+async def test_a_span_that_ends_before_it_starts_is_refused(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+
+    response = await client.get(
+        "/api/v1/meals/history",
+        params={"start": "2026-08-23", "end": "2026-08-17"},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+async def test_an_endless_span_is_refused(client: AsyncClient) -> None:
+    headers = await sign_up(client)
+
+    response = await client.get(
+        "/api/v1/meals/history",
+        params={"start": "2020-01-01", "end": "2026-08-23"},
+        headers=headers,
+    )
+
+    assert response.status_code == 422

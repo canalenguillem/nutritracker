@@ -103,8 +103,10 @@ export const getDailySummary = async (day?: string): Promise<DailySummary> => {
   return toDailySummary(dailySummaryResponseSchema.parse(response.data));
 };
 
-export const getHistory = async (days: number): Promise<DailySummary[]> => {
-  const response = await httpClient.get<unknown>("/meals/history", { params: { days } });
+export const getHistory = async (start: string, end: string): Promise<DailySummary[]> => {
+  const response = await httpClient.get<unknown>("/meals/history", {
+    params: { start, end },
+  });
 
   return z.array(dailySummaryResponseSchema).parse(response.data).map(toDailySummary);
 };

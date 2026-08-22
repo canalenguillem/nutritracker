@@ -1,21 +1,15 @@
-import { formatEnergy } from "../features/meals/mealLabels";
+import { addDays, formatEnergy, fromIsoDay, mondayOf } from "../features/meals/mealLabels";
 import { useHistory } from "../features/meals/useMeals";
 import type { DailySummary } from "../types/meal";
 
-const DAYS = 7;
-
 interface DayStripProps {
   readonly selectedDay: string;
+  readonly today: string;
   readonly onSelect: (day: string) => void;
 }
 
-const weekdayOf = (isoDay: string): string => {
-  const [year = 0, month = 1, day = 1] = isoDay.split("-").map(Number);
-
-  return new Intl.DateTimeFormat("es-ES", { weekday: "narrow" }).format(
-    new Date(year, month - 1, day),
-  );
-};
+const weekdayOf = (isoDay: string): string =>
+  new Intl.DateTimeFormat("es-ES", { weekday: "narrow" }).format(fromIsoDay(isoDay));
 
 const dayNumberOf = (isoDay: string): string => isoDay.split("-")[2] ?? "";
 
@@ -23,8 +17,12 @@ const dayNumberOf = (isoDay: string): string => isoDay.split("-")[2] ?? "";
 const scaleOf = (days: readonly DailySummary[]): number =>
   Math.max(...days.map((day) => Math.max(day.kcal, day.exerciseKcal)), 1);
 
-export const DayStrip = ({ selectedDay, onSelect }: DayStripProps) => {
-  const history = useHistory(DAYS);
+export const DayStrip = ({ selectedDay, today, onSelect }: DayStripProps) => {
+  // The week runs Monday to Sunday, and it is the week of the day being read,
+  // so stepping back into last week brings that week's strip with it.
+  const monday = mondayOf(selectedDay);
+  const sunday = addDays(monday, 6);
+  const history = useHistory(monday, sunday);
   const days = history.data ?? [];
 
   if (days.length === 0) {
@@ -32,13 +30,15 @@ export const DayStrip = ({ selectedDay, onSelect }: DayStripProps) => {
   }
 
   const scale = scaleOf(days);
+  const isThisWeek = mondayOf(today) === monday;
 
   return (
-    <section className="day-strip" aria-label="Últimos días">
-      <h2>Últimos siete días</h2>
+    <section className="day-strip" aria-label="Semana">
+      <h2>{isThisWeek ? "Esta semana" : "Esa semana"}</h2>
       <ol className="day-strip__list">
         {days.map((day) => {
           const isSelected = day.logDate === selectedDay;
+          const isFuture = day.logDate > today;
 
           return (
             <li key={day.logDate}>
@@ -48,6 +48,7 @@ export const DayStrip = ({ selectedDay, onSelect }: DayStripProps) => {
                   isSelected ? "day-strip__day day-strip__day--current" : "day-strip__day"
                 }
                 onClick={() => onSelect(day.logDate)}
+                disabled={isFuture}
                 aria-current={isSelected ? "date" : undefined}
               >
                 <span className="day-strip__bars" aria-hidden="true">
@@ -63,9 +64,9 @@ export const DayStrip = ({ selectedDay, onSelect }: DayStripProps) => {
                 <span className="day-strip__weekday">{weekdayOf(day.logDate)}</span>
                 <span className="day-strip__number">{dayNumberOf(day.logDate)}</span>
                 <span className="day-strip__kcal">
-                  {day.mealCount === 0 && day.exerciseCount === 0
+                  {isFuture || (day.mealCount === 0 && day.exerciseCount === 0)
                     ? "—"
-                    : `${formatEnergy(day.kcal)}`}
+                    : formatEnergy(day.kcal)}
                 </span>
               </button>
             </li>

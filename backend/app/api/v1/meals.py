@@ -74,21 +74,48 @@ async def list_meals(
     return [MealResponse.model_validate(meal) for meal in meals]
 
 
+MAX_HISTORY_DAYS = 31
+
+
 @router.get("/history", response_model=list[DailySummaryResponse])
 async def read_history(
     user: CurrentUserDependency,
     service: MealServiceDependency,
     exercises: ExerciseServiceDependency,
     profiles: ProfileServiceDependency,
-    days: Annotated[int, Query(ge=2, le=31)] = 7,
+    start: Annotated[date | None, Query()] = None,
+    end: Annotated[date | None, Query()] = None,
+    days: Annotated[int, Query(ge=2, le=MAX_HISTORY_DAYS)] = 7,
 ) -> list[DailySummaryResponse]:
-    """The last few days side by side, oldest first, so they can be compared."""
+    """A run of days side by side, oldest first, so they can be compared.
+
+    Given a start and an end it answers for exactly that span, which is how a
+    calendar week is asked for. Otherwise it counts back from today.
+    """
     today = local_log_date(utc_now(), user.timezone)
+    last = end if end is not None else today
+    first = start if start is not None else last - timedelta(days=days - 1)
+
+    if first > last:
+        raise ApiError(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="VALIDATION_ERROR",
+            detail="The span has to start before it ends.",
+        )
+
+    span = (last - first).days + 1
+    if span > MAX_HISTORY_DAYS:
+        raise ApiError(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="VALIDATION_ERROR",
+            detail=f"A span of at most {MAX_HISTORY_DAYS} days, please.",
+        )
+
     profile = await profiles.get_profile(user)
 
     return [
-        await _summarise(user, today - timedelta(days=offset), service, exercises, profile)
-        for offset in reversed(range(days))
+        await _summarise(user, first + timedelta(days=offset), service, exercises, profile)
+        for offset in range(span)
     ]
 
 

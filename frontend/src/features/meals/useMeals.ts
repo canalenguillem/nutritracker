@@ -16,7 +16,7 @@ export const mealKeys = {
   summary: (day?: string) => ["meals", "summary", day ?? "today"] as const,
   day: (day: string) => ["meals", "day", day] as const,
   recent: (query: string) => ["meals", "recent", query] as const,
-  history: (days: number) => ["meals", "history", days] as const,
+  history: (start: string, end: string) => ["meals", "history", start, end] as const,
   one: (mealId: string) => ["meals", "one", mealId] as const,
 };
 
@@ -67,8 +67,11 @@ export const useRecentMeals = (query: string) =>
     staleTime: 60_000,
   });
 
-export const useHistory = (days: number) =>
-  useQuery({ queryKey: mealKeys.history(days), queryFn: () => getHistory(days) });
+export const useHistory = (start: string, end: string) =>
+  useQuery({
+    queryKey: mealKeys.history(start, end),
+    queryFn: () => getHistory(start, end),
+  });
 
 export const useMeal = (mealId: string | undefined) =>
   useQuery({

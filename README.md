@@ -44,8 +44,11 @@ La Fase 12 aportó el histórico:
   comida, el ejercicio, el balance y el ayuno de cualquier jornada.
 - El día que se está mirando va en la dirección, así que sobrevive a una recarga
   y se puede compartir o guardar como marcador.
-- Tira de los últimos siete días con la comida y el ejercicio de cada uno, para
-  compararlos de un vistazo y saltar a cualquiera.
+- Tira de la semana natural, de lunes a domingo, con la comida y el ejercicio de
+  cada día para compararlos de un vistazo y saltar a cualquiera.
+- La tira sigue al día que se está mirando, así que retroceder a la semana
+  pasada trae su semana entera. Los días que aún no han llegado se muestran
+  apagados y no se pueden abrir.
 
 La Fase 11 aportó el ayuno:
 

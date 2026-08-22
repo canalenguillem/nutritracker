@@ -54,3 +54,31 @@ export const formatFastingLength = (hours: number): string => {
 
   return `${wholeHours} h ${minutes} min`;
 };
+
+const pad = (value: number): string => String(value).padStart(2, "0");
+
+export const toIsoDay = (day: Date): string =>
+  `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`;
+
+export const fromIsoDay = (isoDay: string): Date => {
+  const [year = 0, month = 1, day = 1] = isoDay.split("-").map(Number);
+
+  return new Date(year, month - 1, day);
+};
+
+/** The Monday opening the week a day belongs to, as weeks are read here. */
+export const mondayOf = (isoDay: string): string => {
+  const day = fromIsoDay(isoDay);
+  // getDay() calls Sunday 0, so Monday has to be pulled back by six, not one.
+  const backwards = day.getDay() === 0 ? 6 : day.getDay() - 1;
+  day.setDate(day.getDate() - backwards);
+
+  return toIsoDay(day);
+};
+
+export const addDays = (isoDay: string, days: number): string => {
+  const day = fromIsoDay(isoDay);
+  day.setDate(day.getDate() + days);
+
+  return toIsoDay(day);
+};
